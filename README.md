@@ -40,7 +40,7 @@ mars_powered_descent/
 │       │   ├── solve_fuel_optimal.m # [论文] 凸优化求解器
 │       │   └── plot_results.m      # [论文] 可视化
 │       ├── obstacle/
-│       │   └── relaxed_glide_slope.m # [论文] 避障约束
+│       │   └── obstacle_constraint.m # [论文] 避障约束 (Eq.6/7/8, 含同伦参数)
 │       └── nn_accel/
 │           ├── train_nn_approximator.m  # [拓展] NN 加速
 │           └── train_nn_simple.m        # [拓展] NN 加速
@@ -90,7 +90,7 @@ mars_powered_descent/
 |----------|----------|------|
 | Eq.1 | mars_dynamics.m | 3-DoF动力学 |
 | Eq.4-5 | mars_params.m | 边界约束 |
-| Eq.7-8 | relaxed_glide_slope.m | 避障约束 |
+| Eq.6-8 | obstacle_constraint.m | 避障约束 (含同伦参数 δ) |
 | Eq.10-12 | solve_fuel_optimal.m | 无损凸化 |
 | Eq.20-23 | solve_fuel_optimal.m | ZOH离散化 |
 | Problem 2-4 | solve_fuel_optimal.m | SOCP求解 |

@@ -27,7 +27,7 @@
 | 课程节点 | 论文读到哪 | 项目动作 |
 |---|---|---|
 | [ ] Lecture 1-3（动力学/积分器）+ HW0 | Section 2.1-2.2（Eq.1-5） | 读懂 `forward_sim.m` 欧拉法；跑 Step 2 悬停试验；可选升级 RK4 |
-| [ ] Lecture 4-5（求根/极小化/牛顿法）+ HW1 Q1-Q2 | Section 2.3-2.4（Eq.6-8、Problem 1 非凸性） | 独立跑通 `relaxed_glide_slope.m`，画锥形走廊 vs 轨迹 |
+| [ ] Lecture 4-5（求根/极小化/牛顿法）+ HW1 Q1-Q2 | Section 2.3-2.4（Eq.6-8、Problem 1 非凸性） | 独立跑通 `obstacle_constraint.m`，画锥形走廊 vs 轨迹 |
 | [ ] Lecture 6-7（内点法/对偶/merit）+ HW1 Q3 | Section 3.1（无损凸化 Eq.10-15） | 逐行读懂 `solve_fuel_optimal.m` 的 cvx 段，能讲清变量与约束规模 |
 | [ ] Lecture 8-10（LQR/DP/MPC）| Section 3.2-3.3（ZOH Eq.20-24、Problem 4） | 补 Eq.6 下滑角约束对照 ~505 kg 基准；求解器 MPC 化（制导闭环） |
 | [ ] Lecture 11-14（iLQR/DDP/SQP/配点）+ HW3 | Section 3.4（Algorithm 1 同伦） | 实现 Algorithm 1 + Problem 5，复现 365.18 / 409.12 kg，画 ζ 收敛图 |

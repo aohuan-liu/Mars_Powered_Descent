@@ -161,7 +161,7 @@
  |   |-- plot_results.m        # 6图可视化
  |
  |-- obstacle/
- |   |-- relaxed_glide_slope.m # 避障约束 (Eq.7-8)
+ |   |-- obstacle_constraint.m # 避障约束 (Eq.6-8, 含同伦参数)
  |
  |-- nn_accel/
  |   |-- train_nn_approximator.m  # NN加速 (Deep Learning Toolbox版)
