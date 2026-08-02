@@ -101,8 +101,9 @@
  
  fprintf('\n========================================\n');
  fprintf('Next steps:\n');
- fprintf('  1. Obstacle avoidance (Paper Section 3.3, Algorithm 1)\n');
- fprintf('  2. Elevation angle objective (Paper Section 4, Algorithm 2)\n');
- fprintf('  3. NN acceleration (train network to approximate solver)\n');
+ fprintf('  1. Already implemented - run run_milestone2 (Algorithm 1),\n');
+ fprintf('     run_milestone3 (Algorithm 2) to verify paper numbers\n');
+ fprintf('  2. MPC closed-loop guidance (rolling horizon)\n');
+ fprintf('  3. NN acceleration (after methodology fix, see nn_accel/README)\n');
  fprintf('  4. RL comparison (PPO/SAC baseline)\n');
  fprintf('========================================\n');

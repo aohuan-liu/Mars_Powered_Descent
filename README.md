@@ -5,6 +5,24 @@
 > Acta Astronautica 248 (2026) 296-313
 > 通讯作者: 郭延宁 (guoyn@hit.edu.cn)
 
+## 项目实现
+
+基于论文完整复现了火星动力下降段的凸优化制导算法（MATLAB + CVX/SOCP）：
+
+- **燃料最优 SOCP 求解（Problem 4）**：`convex_opt/solve_pd_socp.m` 统一实现
+  无损凸化（z/u/σ 变量替换）、ZOH 离散化与泰勒展开线性化，可选用例加入
+  Eq.6 常规下滑角约束。无约束基准燃料 360.33 kg；加 Eq.6 后 360.71 kg
+  （轨迹贴住锥面，裕度 0.00 m）。
+- **同伦避障（Algorithm 1）**：`convex_opt/solve_algorithm1.m` 实现松弛/阶跃
+  避障约束 + 同伦参数 δ + 松弛变量 ζ，复现论文两个场景：
+  tf=80 实测 365.29 kg（论文 365.18）、tf=100 实测 409.47 kg（论文 409.12）。
+- **仰角优化（Algorithm 2）**：`convex_opt/solve_algorithm2.m` 实现轴加权位置
+  目标 + 固定燃料约束，α 扫描仰角积分峰值在 α=1.5，落在论文 [0.5,2] 区间。
+- **验证与证据**：验证脚本逐场景对照论文数字，结果数据与图保存在
+  `results/`；详细记录见 `mars_paper/TECHNICAL_REPORT.md` §8。
+- **自主拓展**：NN 加速（`nn_accel/`）方法论待修正（开环轨迹 ≠ 反馈策略），
+  暂不可用；RL 对比（PPO/SAC）待实现。
+
 ## 项目结构
 
 ```
@@ -28,7 +46,7 @@ mars_powered_descent/
 │   ├── mars_paper/
 │   │   └── TECHNICAL_REPORT.md     #   技术解析文档
 │   ├── mars_tutorial/
-│   │   ├── PAPER_READING_GUIDE.md  #   论文阅读指南
+│   │   ├── DETAILED_PAPER_GUIDE.md #   ★唯一指导文件：论文×代码分阶段学习指南
 │   │   └── mars_landing_viz.html   #   3D 交互可视化
 │   └── mars_project/
 │       ├── main.m                  #   主脚本
@@ -37,13 +55,23 @@ mars_powered_descent/
 │       │   └── mars_dynamics.m     # [论文] 动力学方程 (Eq.1)
 │       ├── convex_opt/
 │       │   ├── forward_sim.m       # [论文] 前向仿真
-│       │   ├── solve_fuel_optimal.m # [论文] 凸优化求解器
+│       │   ├── solve_pd_socp.m      # [论文] 核心 SOCP 求解器 (Problem 4/5/6/7)
+│       │   ├── solve_fuel_optimal.m # [论文] Problem 4 (可选 Eq.6)
+│       │   ├── solve_algorithm1.m   # [论文] Algorithm 1 (同伦+松弛)
+│       │   ├── solve_algorithm2.m   # [论文] Algorithm 2 (仰角优化)
+│       │   ├── trajectory_metrics.m # 燃料/裕度/仰角积分指标
 │       │   └── plot_results.m      # [论文] 可视化
 │       ├── obstacle/
 │       │   └── obstacle_constraint.m # [论文] 避障约束 (Eq.6/7/8, 含同伦参数)
+│       ├── run_milestone1.m        # 里程碑1: Eq.6 下滑角约束
+│       ├── run_milestone2.m        # 里程碑2: Algorithm 1
+│       ├── run_milestone3.m        # 里程碑3: Algorithm 2
+│       ├── export_figures.m        # 由 .mat 结果导出 PNG
+│       ├── results/                # 结果 .mat 与 PNG
 │       └── nn_accel/
-│           ├── train_nn_approximator.m  # [拓展] NN 加速
-│           └── train_nn_simple.m        # [拓展] NN 加速
+│           ├── README.md                # [拓展] 方法论待修正，勿用
+│           ├── train_nn_approximator.m  # [拓展] NN 加速 (DL Toolbox)
+│           └── train_nn_simple.m        # [拓展] NN 加速 (简易版)
 │
 └── OCRL/                           # OCR 学习资料
     ├── HW/                         #   作业 (HW0-4)
@@ -55,17 +83,22 @@ mars_powered_descent/
 
 ## 学习路线
 
-课程（CMU 16-745 OCRL）× 论文 × 项目 的贯通路线见 [ROADMAP.md](ROADMAP.md)，两个线程（课程 / 项目）的进度统一记录在下方学习笔记。
+课程（CMU 16-745 OCRL）× 论文 × 项目 的**总大纲**见 [ROADMAP.md](ROADMAP.md)：
+以论文指南的阶段为主键，标注每阶段对应学哪些课程、做哪些作业，以及**你自己的学习状态**。
+**论文学习唯一入口**：[DETAILED_PAPER_GUIDE.md](mars_guidance/mars_tutorial/DETAILED_PAPER_GUIDE.md)
+（只针对论文、按阶段推进：每阶段"读哪页 → 对应公式 → 对应代码 → 验证效果 → 给代码注释"）。
+进度统一记录在下方学习笔记。
 
 ## 论文 vs 拓展
 
 | 部分 | 来源 | 状态 |
 |------|------|------|
 | 动力学建模 (Eq.1) | 论文 Section 2.1 | 已实现 |
-| 无损凸化 + SOCP 求解 (Section 3.1-3.2) | 论文核心 | 已实现 |
-| 同伦迭代避障 (Section 3.3-3.4) | 论文 | 待实现 |
-| 仰角最大化 (Section 4) | 论文创新点 | 待实现 |
-| NN 加速 (nn_accel/) | **自主拓展** | 待实现 |
+| 无损凸化 + SOCP 求解 (Section 3.1-3.2) | 论文核心 | 已实现（基准 360.33 kg） |
+| 常规下滑角约束 Eq.6 | 论文 Section 2.3 | 已实现（tf=80: 360.71 kg，见技术报告 8.1） |
+| 同伦迭代避障 (Section 3.3-3.4, Algorithm 1) | 论文 | 已实现（365.29/409.47 vs 365.18/409.12） |
+| 仰角最大化 (Section 4, Algorithm 2) | 论文创新点 | 已实现（α 峰值 1.5 ∈ [0.5,2]） |
+| NN 加速 (nn_accel/) | **自主拓展** | 方法论需修正（开环轨迹≠反馈策略），暂不可用 |
 | RL 对比 (PPO/SAC) | **自主拓展** | 待实现 |
 
 ## 前置条件
@@ -84,18 +117,7 @@ mars_powered_descent/
 >> main
 ```
 
-## 论文对应关系
-
-| 论文公式 | 代码文件 | 说明 |
-|----------|----------|------|
-| Eq.1 | mars_dynamics.m | 3-DoF动力学 |
-| Eq.4-5 | mars_params.m | 边界约束 |
-| Eq.6-8 | obstacle_constraint.m | 避障约束 (含同伦参数 δ) |
-| Eq.10-12 | solve_fuel_optimal.m | 无损凸化 |
-| Eq.20-23 | solve_fuel_optimal.m | ZOH离散化 |
-| Problem 2-4 | solve_fuel_optimal.m | SOCP求解 |
-| Algorithm 1 | (后续补充) | 同伦迭代 |
-| Algorithm 2 | (后续补充) | 仰角优化 |
+论文公式 ↔ 代码文件的对应关系见 [ROADMAP.md](ROADMAP.md) 贯通总表。
 
 ## 学习笔记
 

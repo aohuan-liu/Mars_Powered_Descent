@@ -67,9 +67,10 @@
  - T_min <= ||T||_2 <= T_max
  - T_min = 4971.82 N, T_max = 13258.17 N
  
- **下滑角约束**（Eq.6）:
- - rx >= tan(gamma_gs) * sqrt(ry^2 + rz^2)
- - gamma_gs = 10度（比传统45度更保守，适合复杂地形）
+**下滑角约束**（Eq.6）:
+- rx >= tan(gamma_gs) * sqrt(ry^2 + rz^2)
+- gamma_gs = 10度（Eq.6 要求着陆器相对目标点的仰角 >= gamma_gs；
+  gamma_gs 越大约束越紧、要求保持的高度越高；10 度属于较宽松的走廊）
  
  **目标函数**:
  - 最小化燃料消耗: min integral(||T||_2 dt) 或等价 min -m(tf)
@@ -258,14 +259,111 @@
  - 对比 MPC 最优轨迹 vs NN 轨迹
  - 对比求解时间（秒级 vs 毫秒级）
  
- ### Phase 5: 强化学习扩展
- - 配置 RL 环境（MATLAB RL Toolbox）
- - 训练 PPO/SAC agent
- - 三方法对比：凸优化 / NN拟合 / RL
- 
- ---
- 
- ## 参考文献
+### Phase 5: 强化学习扩展
+- 配置 RL 环境（MATLAB RL Toolbox）
+- 训练 PPO/SAC agent
+- 三方法对比：凸优化 / NN拟合 / RL
+
+---
+
+## 8. 实现进度与验证结果（2026-08-02 更新）
+
+本线程按 ROADMAP 里程碑完成了三阶段实现与 MATLAB/CVX 验证。
+代码入口：
+
+```
+convex_opt/solve_pd_socp.m     # 统一核心求解器（Problem 4/5/6/7）
+convex_opt/solve_fuel_optimal.m # Problem 4（可选 Eq.6）
+convex_opt/solve_algorithm1.m  # Algorithm 1（同伦 + 松弛）
+convex_opt/solve_algorithm2.m  # Algorithm 2（仰角目标）
+obstacle/obstacle_constraint.m # Eq.6/7/8 + Box I（含同伦系数 δ）
+run_milestone1/2/3.m           # 各里程碑验证脚本
+export_figures.m               # 由 .mat 结果导出 PNG
+```
+
+### 8.1 里程碑 1：Eq.6 常规下滑角约束（Problem 4）
+
+实测（Tables 1-2，tf=80 s，γ_gs=10°，N=30）：
+
+| 场景 | 燃料 | Eq.6 最小裕度 | 论文目标 |
+|---|---|---|---|
+| 无约束基准（Problem 4） | 360.33 kg | **-46.42 m（违规）** | - |
+| Eq.6 约束 | 360.71 kg | 0.00 m（贴边） | Table 3 给出 505.49 kg（Fig.18d） |
+
+基准违规量 -46.42 m 与此前审查记录的 -47.33 m 一致（离散化差异）。
+**关键发现**：论文 Table 3 的 505.49 kg 并不是 tf=80、Tables 1-2 场景的数值。
+逐 tf 扫描（Eq.6 约束）得到：
+
+| tf (s) | 80 | 90 | 100 | 110 | 120 | 130 | 140+ |
+|---|---|---|---|---|---|---|---|
+| 燃料 (kg) | 360.71 | 383.95 | 408.80 | 434.18 | 459.74 | 485.25 | 单次求解不可行 |
+
+在 tf≈138 s 时燃料需求 ≈505.5 kg，与 Table 3 的 505.49 kg 吻合。
+但 m_wet-m_dry = 1905-1405 = **500 kg 燃料容量**，505.49 kg 超出容量，
+意味着论文 Fig.18 场景的有效 m_dry < 1405（或终端质量约束被放宽）。
+GPOPS 同样报 505.484 kg，说明这是论文内部不一致（Table 1 与 Table 3 的
+燃料容量矛盾），而非我们的实现错误。tf≥140 时单次凸化（Problem 4）不可行，
+正是论文 Fig.18 描述的"Taylor 展开误差随 tf 累积"，需要 Algorithm 1 的
+迭代细化。
+
+### 8.2 里程碑 2：Algorithm 1（同伦 + 松弛变量）
+
+按论文 Algorithm 1 实现：δ = min(j,H)/H（H=3），F 按 Eq.32/33（Box I）
+计算，Taylor 展开以参考轨迹为基准（Eq.30），松弛约束 rx ≥ F + ζ（Eq.34），
+目标 min λΔtΣσ + W_ζ‖ζ‖₂（Eq.35/36），W_ζ=10³，ε_ζ=10⁻⁶。
+
+| 场景 | 实测燃料 | 论文目标 | 收敛 | 最小裕度 |
+|---|---|---|---|---|
+| 阶跃约束，Tables 1-2，tf=80 | 380.16 kg | 未给数值（Fig.19） | 4 次，‖ζ‖₂→1e-15 | 0.00 m |
+| 松弛约束，r0=[1500,0,500]，v0=[-75,0,-100]，tf=80 | **365.29 kg** | **365.18 kg**（Fig.20） | 4 次 | 0.00 m |
+| 同上，tf=100 | **409.47 kg** | **409.12 kg**（Fig.21） | 4 次 | 0.00 m |
+
+365.29/409.47 vs 365.18/409.12：偏差 0.11/0.35 kg（0.03%/0.09%），
+来源于 N=30 离散化与论文求解器的差异，属于可接受复现精度。
+同时复现了燃料-终端时间可行域曲线（Fig.22 类比）：tf=60 时 403.3 kg
+（近全推力边界），tf≈70 处燃料最低 357.26 kg，之后随 tf 单调上升。
+
+### 8.3 里程碑 3：Algorithm 2（仰角优化）
+
+按论文 Problem 6/7 实现：目标 min -αΣrx + Σ|ry| + Σ|rz| + W_ζ‖ζ‖₂
+（k=1..N），m_dry = m_wet - m_fuel。
+
+**α 扫描**（阶跃约束，Tables 1-2，tf=80，m_fuel=400 kg，α=0.1..20）：
+
+| α | 0.1 | 0.6 | 1.5 | 2.5 | 5 | 10 | 20 |
+|---|---|---|---|---|---|---|---|
+| 仰角积分 I | 1060.7 | 1262.4 | **1285.7（峰值）** | 1248.1 | 1161.1 | 1042.4 | 1000.8 |
+
+峰值出现在 α∈[0.5,2] 区间内，与论文 Fig.8 及"α∈[0.5,2] 合适、默认 α=1"
+的结论一致。
+
+**固定燃料扫描**（松弛约束，r0=[1500,0,500]，v0=[-75,0,-100]）：
+
+| m_fuel | 可行 tf 区间 | 仰角积分曲线 | 峰值 |
+|---|---|---|---|
+| 365.18 kg | [65, 80] s | 1720.7(65) → 1781.3(70) → 1773.0(75) → 1643.0(80) | tf=70 |
+| 409.12 kg | [65, 95] s | 1896.8(65) → 2116.2(80) → 2111.7(85) → 1982.4(95) | tf=80 |
+
+两条曲线均为单峰（与论文 Fig.25/29 "elevation angle integral curve exhibits
+a single peak" 一致）。tf=100、m_fuel=409.12 位于可行域边界之外：
+该 tf 下最小燃料需求 409.47 kg > 409.12 kg（0.35 kg 离散化偏差所致）。
+
+### 8.4 论文-代码逐条对照发现的不一致
+
+1. **z_l/z_u 命名与论文相反（已修正）**：原代码 z_l=ln(m_wet-λT_max·t)
+   （最低质量轨迹）、z_u=ln(m_wet-λT_min·t)；论文 Eq.18/27 定义
+   z_l=ln(m_wet-λT_min·t)（最高质量轨迹）、z_u=ln(m_wet-λT_max·t)。
+   两种选择都保守，但论文选择在约束活跃处更紧；已按论文修正。
+2. **Table 3 燃料 505.49 kg 与 Table 1 容量矛盾（论文问题，已核实）**：
+   见 8.1。复现需要 tf≈138 s 且有效燃料容量 ≥505.49 kg。
+3. **H 参数不一致（已修正）**：原 mars_params.m 中 H=10；论文 Section 5.1
+   明确 H=3（"converges within four SCP iterations"），已改为 3。
+4. **单次求解在 tf≥140 不可行**：Taylor 线性化（Eq.26）随 tf 累积误差，
+   印证论文采用迭代细化（Eq.30）的必要性。
+
+---
+
+## 参考文献
  
  1. Gao et al., "Obstacle avoidance guidance for Mars powered descent using convex optimization and elevation angle", *Acta Astronautica* 248 (2024) 296-313
  2. Acikmese & Ploen, "Convex programming approach to powered descent guidance for Mars landing", *AIAA JGCD*, 2007

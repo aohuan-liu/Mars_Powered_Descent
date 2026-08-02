@@ -31,17 +31,19 @@
  params.h_safe = 500;                % Safety altitude [m]
  params.l_step = 500;                % Stepwise safety radius [m]
  params.h_step = 500;                % Stepwise safety altitude [m]
+ params.gamma_new = atan(params.h_safe / (params.l2 - params.l1));  % relaxed cone angle [rad]
  
  % Solver
  params.N  = 30;                     % Discretization points
  params.tf = 80;                     % Total flight time [s]
  params.dt = params.tf / (params.N + 1);             % Time step [s]
  
- % Elevation angle weight
+ % Elevation angle weight (Table 2)
  params.alpha_elev = 1;
  
- % Homotopy iteration
- params.H        = 10;
- params.tol_zeta = 1e-4;
+ % Homotopy iteration (Algorithm 1/2, Table 2 and Section 5.1)
+ params.H        = 3;               % Paper: H = 3 (was 10 in earlier draft)
+ params.tol_zeta = 1e-6;            % eps_zeta: slack convergence tolerance
+ params.W_zeta   = 1e3;             % W_zeta: slack penalty weight (Table 2)
  end
 
