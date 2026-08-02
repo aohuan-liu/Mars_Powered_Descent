@@ -53,6 +53,10 @@ mars_powered_descent/
 
 > simulink-agentic-toolkit 需从 https://github.com/matlab/simulink-agentic-toolkit 单独克隆。
 
+## 学习路线
+
+课程（CMU 16-745 OCRL）× 论文 × 项目 的贯通路线见 [ROADMAP.md](ROADMAP.md)，两个线程（课程 / 项目）的进度统一记录在下方学习笔记。
+
 ## 论文 vs 拓展
 
 | 部分 | 来源 | 状态 |
@@ -111,4 +115,6 @@ mars_powered_descent/
   - 以目标点为原点建立惯性坐标系。传统下滑角约束：
     以原点为顶点建立倒立锥，着陆器要始终在锥外面飞行。
 
-
+### 8.2
+- 1 OCRL
+  - HW0

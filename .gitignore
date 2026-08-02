@@ -16,3 +16,6 @@ slprj/
 
 # Embedded git repo
 matlab_mcp/simulink-agentic-toolkit/
+
+# Jupyter
+.ipynb_checkpoints/

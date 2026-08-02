@@ -1,0 +1,1213 @@
+                                                                       Acta Astronautica 248 (2026) 296–313
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                                          Acta Astronautica
+                                                         journal homepage: www.elsevier.com/locate/actaastro
+
+
+Research Paper
+
+Obstacle avoidance guidance for Mars powered descent using convex
+optimization and elevation angle
+Duozhi Gao a ,1 , Youmin Gong b ,2 , Yanning Guo a,c                                         ,∗,3 , Yizheng Xiao d    ,4 ,
+
+Edoardo Fadda e ,5 , Paolo Brandimarte e ,6
+a
+    Department of Control Science and Engineering, Harbin Institute of Technology, Harbin 150001, China
+b School of Intelligence Science and Engineering, Harbin Institute of Technology (Shenzhen), Shenzhen 518055, China
+c Zhengzhou Research Institute, Harbin Institute of Technology, Zhengzhou 450000, China
+d School of Aerospace Science, Harbin Institute of Technology (Shenzhen), Shenzhen 518055, China
+e
+    Department of Mathematical Sciences, DISMA, Politecnico di Torino, Torino 10129, Italy
+
+
+
+ARTICLE                  INFO                               ABSTRACT
+
+Keywords:                                                   This paper presents a convex optimization framework for obstacle avoidance guidance during the powered
+Powered descent                                             descent phase of Mars landing. The proposed approach retains the computational efficiency of convex
+Obstacle avoidance                                          optimization while enhancing the onboard camera field of view at the terminal phase. First, the relaxed
+Convex optimization
+                                                            glide-slope constraint and the stepwise constraint are introduced. The trajectory optimization problem is
+Trajectory optimization
+                                                            then mathematically formulated, followed by convexification and discretization. Second, a homotopy iteration
+                                                            method is integrated into the sequential convex optimization framework to develop relaxed glide-slope and
+                                                            stepwise obstacle avoidance constraints. Third, leveraging the concept of elevation angle, an axis-weighted
+                                                            position integral is introduced as the objective function, followed by the development of an elevation-angle-
+                                                            based convex optimization algorithm. To assess the algorithm’s effectiveness, three scenarios are evaluated:
+                                                            fixed fuel and terminal time, fixed terminal time, and fixed fuel. Furthermore, an optimal obstacle avoidance
+                                                            framework is formulated based on the maximum elevation angle integral. Simulation results demonstrate that
+                                                            the proposed homotopy iteration-based obstacle avoidance algorithm effectively circumvents obstacles under
+                                                            varying initial conditions while satisfying relaxed glide-slope and stepwise constraints. More importantly, the
+                                                            new convex optimization framework not only enhances obstacle avoidance, but also enables near-vertical
+                                                            landings, thereby improving the terminal camera field of view and reducing the risk of lander tipping upon
+                                                            touchdown. Additionally, simulations confirm that the proposed convex optimization algorithm can achieve
+                                                            effective obstacle avoidance and an enhanced terminal field of view without increasing fuel consumption.
+
+
+
+1. Introduction                                                                                 initiatives. Historically, planetary landing missions prioritized safety
+                                                                                                by selecting flat, obstacle-free regions. However, emerging scientific
+    The rapid advancement of space technology in recent years has                               objectives now demand exploration of complex terrains such as craters,
+greatly increased global interest in planetary surface exploration, par-                        canyons, and volcanic regions, imposing stringent requirements on
+ticularly targeting celestial bodies such as the Moon, Mars, and aster-                         precision landing and obstacle avoidance capabilities.
+oids [1]. A series of landmark missions have been successfully exe-                                 Safe and reliable guidance during the terminal powered descent
+cuted or proposed, including Martian surface exploration [2], asteroid                          phase becomes particularly critical for achieving soft pinpoint landings
+sampling [3], crewed lunar landings [4], and Mars sample return                                 in these hazardous environments. During this phase, the lander ignites
+                                                                                                its main engines to generate substantial thrust for deceleration and
+
+     ∗ Corresponding author.
+     E-mail addresses: 21b904021@stu.hit.edu.cn (D. Gao), gongyoumin@hit.edu.cn (Y. Gong), guoyn@hit.edu.cn (Y. Guo), 22b361002@stu.hit.edu.cn
+(Y. Xiao), edoardo.fadda@polito.it (E. Fadda), paolo.brandimarte@polito.it (P. Brandimarte).
+  1
+     Ph.D. Candidate, Department of Control Science and Engineering, Harbin Institute of Technology.
+  2
+     Associate Professor, School of Intelligence Science and Engineering, Harbin Institute of Technology (Shenzhen).
+  3
+     Professor, Department of Control Science and Engineering, Harbin Institute of Technology.
+  4
+     Ph.D. Student, School of Aerospace Science, Harbin Institute of Technology (Shenzhen).
+  5
+     Assistant Professor, Department of Mathematical Sciences, DISMA, Politecnico di Torino.
+  6
+     Professor, Department of Mathematical Sciences, DISMA, Politecnico di Torino.
+
+https://doi.org/10.1016/j.actaastro.2026.05.059
+Received 9 July 2025; Received in revised form 3 May 2026; Accepted 29 May 2026
+Available online 4 June 2026
+0094-5765/© 2026 Published by Elsevier Ltd on behalf of IAA.
+D. Gao et al.                                                                                                            Acta Astronautica 248 (2026) 296–313
+
+
+trajectory control, ultimately achieving zero terminal velocity at the         for solving nonlinear optimal control problems, including generalized
+designated landing site. This process must satisfy numerous internal           Gaussian [35], heat-equation-based [36], and Mainardi kernel smooth-
+and external constraints, including thruster magnitude limits and ob-          ing approaches [37]. Based on these advances, this paper develops
+stacle avoidance requirements. Current guidance methodologies for              a homotopy-convex optimization method specifically tailored to the
+powered descent can be broadly categorized into three paradigms [5]:           challenges of Mars landing, including fuel-optimal guidance with guar-
+analytical guidance [6], numerical optimization-based methods [7],             anteed obstacle avoidance and an enhanced terminal field of view
+and learning-based approaches [8].                                             achieved through elevation-angle maximization.
+    Analytical guidance approaches, such as polynomial guidance [9]                For obstacle avoidance, Cui et al. [38] integrated convex trajectory
+and zero-effort miss/zero-effort velocity guidance [10], are widely            design and adaptive curvature regulation within the convex optimiza-
+used for their computational efficiency. Polynomial-based methods              tion framework to enable obstacle avoidance. Long et al. [39] proposed
+have been successfully applied in Apollo and Mars Science Labora-              a vector trajectory-based obstacle avoidance approach that decom-
+tory missions [9], while augmented schemes with tunable parameters             poses avoidance constraints into trajectory direction constraint and
+have improved their adaptability [11,12]. ZEM/ZEV methods have                 distance constraint, which are then reformulated as auxiliary angular
+been extended to incorporate waypoint optimization [13], barrier Lya-          constraint. Bai et al. [40] employed a relaxation factor and convex
+punov functions for terrain avoidance [14], and hybrid formulations            relaxation techniques to address conical obstacle constraint protruding
+under relaxed constraints [10,15]. Convex curvature guidance [16–
+                                                                               from the surface. Liu et al. [41] modeled obstacles using polynomials
+18] combines constant acceleration with ZEM/ZEV to ensure obsta-
+                                                                               and incorporated safety distance constraint to maintain a secure margin
+cle avoidance. Despite these advances, analytical methods generally
+                                                                               between the lander and obstacles. Gong et al. introduced a prescribed
+struggle with thrust magnitude constraints, parameter sensitivity, and
+                                                                               performance function to address step-shaped terrains [42] Additionally,
+fuel optimality. Learning-based approaches, particularly reinforcement
+                                                                               methods addressing uncertainty have been developed for safer obstacle
+learning [8,19], offer fast online computation but face challenges in
+                                                                               avoidance. For example, Yang et al. [43] used collision probability
+stability and reliability for practical deployment.
+                                                                               sliding-mode guidance to account for state uncertainties, while Xiao
+    In contrast, optimization-based guidance methods provide a more
+                                                                               et al. [44] applied polynomial chaos expansion and model predictive
+direct and effective approach to constraint handling and fuel minimiza-
+                                                                               convex programming to mitigate navigation errors during landing and
+tion. In three-degree-of-freedom (3-DoF) scenarios, convex program-
+ming and pseudospectral optimization are commonly employed [20,                ensure safe obstacle avoidance.
+21], while six-degree-of-freedom (6-DOF) scenarios typically rely on               Among the various optimization techniques, convex optimization
+sequential convex optimization and nonlinear programming to address            has attracted widespread attention due to its tractability. An ideal
+nonlinearity [22,23]. Among these, convex optimization stands out for          scenario for optimization-based obstacle avoidance is to represent the
+its rapid computational capabilities. Açıkmeşe et al. [20] first intro-        problem through a convex optimization framework. This paper builds
+duced the use of lossless convex optimization techniques for solving the       upon lossless convexification and proposes an elevation-angle-based
+3-DoF powered descent problem, establishing a basis for later convex           convex optimization method. The proposed approach explicitly incor-
+programming methods. Building on this work, Blackmore et al. [24]              porates relaxed glide-slope constraint and stepwise obstacle avoidance,
+applied similar techniques to address the minimum landing error prob-          while ensuring an adequate terminal camera field of view and enabling
+lem. Scharf et al. [25] developed an onboard software system known             a controlled landing with minimal lateral velocity to prevent tipping.
+as ‘‘G-FOLD’’, which leverages convex optimization techniques and has          This work makes the following key contributions:
+demonstrated successful performance in real-world tests. To enhance
+                                                                                 (1) A sequential convex optimization framework integrating homo-
+computational performance, Sagliano [21,26] introduced a hybrid ap-
+                                                                                     topy iteration is developed to address obstacle avoidance under
+proach combining pseudospectral methods with convex optimization
+                                                                                     relaxed glide-slope and stepwise constraints.
+to improve computational efficiency. Song et al. [27] segmented the
+                                                                                 (2) An elevation-angle-based convex optimization algorithm is for-
+powered descent phase and addressed the problem using a multi-
+                                                                                     mulated, incorporating an axis-weighted position integral as the
+phase pseudospectral method within a convex optimization framework.
+Collaborative optimization methods have also been explored to bal-                   objective function to ensure effective obstacle avoidance while
+ance fuel efficiency, landing accuracy, and trajectory flexibility [28].             optimizing the terminal field of view.
+Zhang et al. [29] proposed a parallel sequential convex programming              (3) A systematic framework for generating trajectories with optimal
+method for cooperative multi-vehicle trajectory replanning. Addition-                elevation angle integral is constructed based on the proposed
+ally, Chen et al. [23] utilized a combination of interior-point algorithms           convex optimization algorithm.
+and homotopy methods to tackle the 6-DOF landing guidance prob-
+                                                                                  The rest of this paper is organized as follows. Section 2 details the
+lem. Optimization-based approaches offer precise constraint handling
+                                                                               problem formulation. Section 3 discusses the improved lossless con-
+and enhance fuel efficiency, thereby supporting heavier scientific pay-
+                                                                               vexification and obstacle avoidance methods. Section 4 introduces the
+loads and increasing the probability of mission success. However, these
+methods often lead to nonconvex optimization problems, which are               elevation-angle-based guidance approach. Section 5 provides numerical
+computationally intensive and inefficient to solve.                            demonstrations and analysis. Finally, Section 6 concludes the paper.
+    More recently, homotopy iteration has emerged as an effective
+technique to handle non-convex constraints within optimization-based           2. Problem formulation         建模：着陆器看成质点
+frameworks. Ma et al. [30] combined the NLP solver with homotopy-
+based backtracking strategy for lunar rover vertical takeoff and landing          In this section, a mathematical formulation of the powered descent
+maneuvers in the presence of terrain constraints. Wang et al. [31]             landing scenario within a 3-DoF framework is presented.
+proposed a homotopic-iterative strategy for rocket landing trajectory
+optimization with nonlinear aerodynamic drag force. Malyuta and                2.1. Mathematical modeling of dynamics
+Açıkmeşe [32] introduced a fast homotopy method for spacecraft
+rendezvous trajectory optimization with discrete logic constraints, sig-           This paper utilizes a powered descent model based on the 3-DoF
+nificantly improving computational efficiency. Additionally, Zhao et al.       framework. During the powered descent phase, the lander is modeled
+[33,34] advanced this methodology by developing smoothing-homotopy-            as a point mass influenced by gravity and thruster-generated forces.
+based sequential convex programming for general trajectory optimiza-           Consistent with most previous studies, this work assumes constant
+tion problems, with successful applications to ascent trajectory opti-         gravitational acceleration, neglects atmospheric drag, and ignores the
+mization subject to complex path constraints. In a sequence of pa-             effects of planetary rotation. The surface inertial coordinate system
+pers, Pan et al. proposed a family of smoothing homotopy methods               𝑂 𝑥𝑦𝑧 is defined with its origin located at the targeted landing site. In
+
+                                                                         297
+D. Gao et al.                                                                                                                     Acta Astronautica 248 (2026) 296–313
+
+
+                                                                                     2.3. Mathematical modeling of obstacle avoidance
+
+                                                                                         Obstacle avoidance is critical during the landing process. Some
+                                                                                     existing studies model obstacles using a glide-slope constraint to ensure
+                                                                                     the lander does not collide with them. In this approach, the glide-
+                                                                                     slope constraint increases continuously with altitude. However, during
+                                                                                     descent, when the altitude exceeds a certain safety threshold, the risk
+                                                                                     of collision with obstacles becomes negligible. To address this, this
+                                                                                     study enhances the conventional glide-slope constraint by introducing
+                                                                                     a relaxed glide-slope constraint or a stepwise constraint, as shown in
+                                                                                     Fig. 2. The conventional glide-slope constraint, illustrated in Fig. 2(a),
+                                                                                     is mathematically expressed as follows:
+
+                                                                                      tan 𝛾𝑔𝑠 ≤ √ 𝑥
+                                                                                                    𝑟
+                                                                                                  𝑟2𝑦 + 𝑟2𝑧
+                                                                                                            .               7月26日位置                         (6)
+           Fig. 1. Coordinate system and powered descent scenario.
+
+                                                                                     where, 𝛾𝑔𝑠 denotes the glide-slope angle, 𝑟𝑥 , 𝑟𝑦 , and 𝑟𝑧 are the individual
+                                                                                     components of the position vector 𝒓.
+this system, the 𝑥-axis points vertically upward, the 𝑦-axis extends to-                 The relaxed glide-slope constraint, as illustrated in Fig. 2(b), is
+ward the east, and the 𝑧-axis points northward. A schematic illustration             mathematically defined as follows:
+of this coordinate system is provided in Fig. 1.                                                                        √
+      Within the surface inertial coordinate system 𝑂 𝑥𝑦𝑧, the lander’s                   ⎧
+                                  [        ]T                                              ⎪0,                             𝑟2𝑦 + 𝑟2𝑧 ⩽ 𝑙1
+position is expressed as 𝒓 = 𝑟𝑥 , 𝑟𝑦 , 𝑟𝑧 ∈ R3 , and its velocity as 𝒗 =
+[             ]T                                             [            ]T               ⎪√ 2                                √
+                                                                                     𝑟𝑥 ⩾ ⎨( 𝑟𝑦 + 𝑟2𝑧 − 𝑙1 ) tan 𝛾𝑛𝑒𝑤 , 𝑙1 < 𝑟2𝑦 + 𝑟2𝑧 < 𝑙2                    (7)
+  𝑣𝑥 , 𝑣𝑦 , 𝑣𝑧 ∈ R3 . The thrust vector is represented by 𝑻 = 𝑇𝑥 , 𝑇𝑦 , 𝑇𝑧 ∈                                                   √
+   3
+                                                                                           ⎪
+R , while the gravitational acceleration on Mars is denoted as 𝒈𝑚 . The                    ⎪ℎ,                          𝑙2 ⩽ 𝑟2𝑦 + 𝑟2𝑧
+lander’s dynamics are then described by:                                                   ⎩
+                                                                                                              (      )
+̇ = 𝒗(𝑡),
+𝒓(𝑡)                                                                                 where, tan 𝛾𝑛𝑒𝑤 = ℎ∕ 𝑙2 − 𝑙1 denotes the relaxed glide-slope angle, ℎ
+
+̇ = 𝒈𝑚 +
+𝒗(𝑡)
+           𝑻 (𝑡)
+                 ,
+                                动力学方程                                   (1)
+                                                                                     represents the safe altitude. 𝑙1 is the safe radius at the landing site, and
+                                                                                     𝑙2 is the safe radius at an altitude of ℎ.
+           𝑚(𝑡)
+                                                                                         The stepwise constraint, as illustrated in Fig. 2(c), is mathematically
+𝑚(𝑡)
+̇    = −𝜆‖𝑻 (𝑡)‖2 .
+                                                                                     defined as follows:
+where, 𝑚 denotes the mass of the lander, 𝜆 is the fuel consumption                               √
+                                                                                           ⎧
+coefficient, ‖𝑻 (𝑡)‖2 indicates the magnitude of the thrust. The fuel                      ⎪0,     𝑟2𝑦 + 𝑟2𝑧 ⩽ 𝑙
+consumption coefficient 𝜆 is calculated using the specific impulse 𝐼𝑠𝑝 ,             𝑟𝑥 ⩾ ⎨          √                                                         (8)
+Earth’s gravitational acceleration 𝑔𝑒 , and the thruster’s configuration,                  ⎪ℎ, 𝑙 ⩽ 𝑟2𝑦 + 𝑟2𝑧
+                                                                                           ⎩
+following the approach outlined in [20]:
+                                                                                     where, ℎ is the safe altitude, and 𝑙 is the safe radius.
+           1
+𝜆=                .                                                     (2)
+     𝐼𝑠𝑝 𝑔𝑒 cos 𝜙
+                                                                                     2.4. Fuel optimal problem formulation
+    An elevation angle, which can be used to characterize the lander’s
+field of view, is represented as 𝜃 as shown in Fig. 1. It is defined by                  Fuel consumption is one of the important metrics in the landing pro-
+                 𝑟𝑥                      𝑟                                           cess, especially for extraterrestrial objects such as the Moon and Mars.
+𝜃 ≐ arcsin √                 = arctan √ 𝑥        .                     (3)
+             𝑟2𝑥 + 𝑟2𝑦 + 𝑟2𝑧           𝑟2𝑦 + 𝑟2𝑧                                     Under these circumstances, the optimization problem aims to minimize
+                                                                                     overall fuel usage. The thrust magnitude and direction serve as the
+        √
+where, 𝑟2𝑦 + 𝑟2𝑧 ≠ 0.                                                                optimization variables. The fuel-optimal powered descent guidance task
+                                                                                     is posed as the following optimal control problem:
+2.2. Constraint formulation for states and controls
+                                                                                     Problem 1. Fuel optimal powered descent problem
+    For the soft pinpoint landing problem, the lander’s initial and final                                      𝑡𝑓
+states are subject to the following constraints:                                     min −𝑚(𝑡𝑓 ) ⇔ min              ‖𝑻 (𝑡)‖2 d𝑡
+                                                                                     𝑻 (𝑡)          𝑻 (𝑡) ∫0
+𝒓(𝑡0 ) = 𝒓0 , 𝒗(𝑡0 ) = 𝒗0 , 𝑚(𝑡0 ) = 𝑚wet .                                                                                                                       (9)
+                                                                        (4)          subject to ∶ Eqs. (1), (4), (5),
+𝒓(𝑡𝑓 ) = 𝒓𝑓 , 𝒗(𝑡𝑓 ) = 𝒗𝑓 , 𝑚(𝑡𝑓 ) ≥ 𝑚dry .                                                      Eq. (6) or (7) or (8).
+where 𝑡0 and 𝑡𝑓 denote the initial and final times, respectively. 𝑚wet
+                                                                                         Problem 1 describes the fuel optimal powered descent guidance
+represents the total initial mass (lander plus fuel), while 𝑚dry is the
+                                                                                     problem, which is inherently non-convex in nature. When employing
+dry mass of the lander. The mass values at the start and end of
+                                                                                     conventional glide-slope constraint in Eq. (6) for obstacle avoidance,
+the maneuver are 𝑚(𝑡0 ) and 𝑚(𝑡𝑓 ), respectively. Similarly, 𝒓0 and 𝒓𝑓
+                                                                                     an effective approach to addressing this challenge involves the utiliza-
+correspond to the initial and final positions, and 𝒗0 and 𝒗𝑓 represent
+                                                                                     tion of lossless convexification to reformulate the original non-convex
+the initial and final velocities.
+   Control constraints arise from the physical characteristics and as-               problem as a second-order cone programming (SOCP) problem [20,24].
+sumptions of the thrusters. The constraints on thrust are as follows:                When incorporating the relaxed glide-slope constraint in Eq. (7) or
+                                                                                     the stepwise constraint in Eq. (8), these constraints cannot be directly
+                                                                                     formulated as second-order cone constraints.
+0 < Tmin ≤ ‖𝑻 (𝑡)‖2 ≤ Tmax .                                            (5)
+where Tmin is a positive value, indicating that the engines cannot be                3. Improved lossless convexification and obstacle avoidance
+shut down during the descent process and must be started from the
+beginning, while Tmax represents the maximum thrust the thrusters can                   Building upon the standard lossless convexification framework [20,
+provide.                                                                             24] and homotopy-based obstacle handling, this section presents a
+
+                                                                               298
+D. Gao et al.                                                                                                                                  Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                                    Fig. 2. Illustration of obstacle avoidance constraints.
+
+
+discrete-time convex formulation of the powered descent problem.                         Consequently, Problem 1 can be transformed into the following
+Compared with the conventional formulation, the proposed method                      relaxed formulation:
+introduces an iterative refinement scheme to reduce Taylor approxi-
+mation errors and incorporates obstacle avoidance through homotopy                   Problem 2. Relaxed fuel optimal powered descent problem
+iteration and slack relaxation.                                                                                                 𝑡𝑓
+                                                                                             min − 𝑧(𝑡𝑓 ) ⇔ min                      𝜎 (𝑡)d𝑡
+3.1. Lossless convexification                                                               𝒖(𝑡),𝜎(𝑡)            𝒖(𝑡),𝜎(𝑡) ∫0                                                (15)
+                                                                                     subject to ∶ Eqs. (6), (12), (13).
+     For Problem 1, the non-convexity arises primarily from the min-
+imum thrust constraint and the nonlinear dynamics involving mass                         The thrust bound becomes
+division. Following Ref. [20], a slack variable 𝛤 (𝑡) is introduced to relax
+                                                                                     0 < Tmin 𝑒−𝑧(𝑡) ≤ 𝜎 (𝑡) ≤ Tmax 𝑒−𝑧(𝑡) .                                                 (16)
+the thrust constraint:
+                          𝑻 (𝑡)                                                      which is non-convex. A Taylor approximation is applied to obtain a
+            ̇ = 𝒈𝑚 +
+ ̇ = 𝒗(𝑡), 𝒗(𝑡)
+𝒓(𝑡)                            ,
+                          𝑚(𝑡)                                                       convex relaxation:
+  ̇
+𝑚(𝑡)  = −𝜆𝛤 (𝑡) , ‖𝑻 (𝑡)‖2 ⩽ 𝛤 (𝑡) ,                                    (10)                      [   [              ] 1[                 ]2 ]
+                                                                                     Tmin 𝑒−𝑧𝑙 (𝑡) 1 − 𝑧 (𝑡) − 𝑧𝑙 (𝑡) +     𝑧 (𝑡) − 𝑧𝑙 (𝑡)     ≤ 𝜎 (𝑡) ,
+0 < Tmin ≤ 𝛤 (𝑡) ≤ Tmax .                                                                                 [    [        2 ]]                             (17)
+                                                                                     𝜎 (𝑡) ≤ Tmax 𝑒−𝑧𝑢 (𝑡) 1 − 𝑧 (𝑡) − 𝑧𝑢 (𝑡) .
+where 𝛤 (𝑡) is the introduced slack variable. As shown in Refs. [20,24],
+this relaxation is lossless under fuel-optimal objectives.                           where, 𝑧𝑙 (𝑡) and 𝑧𝑢 (𝑡) are defined as:
+     To eliminate nonlinearities in dynamics, the following substitutions                       (              )
+                                                                                     𝑧𝑙 (𝑡) = ln 𝑚wet − 𝜆Tmin 𝑡 ,
+are introduced:                                                                                 (              )                                                             (18)
+                           𝑻 (𝑡)           𝛤 (𝑡)                                     𝑧𝑢 (𝑡) = ln 𝑚wet − 𝜆Tmax 𝑡 .
+𝑧 (𝑡) ≐ ln 𝑚 (𝑡) , 𝒖 (𝑡) ≐       , 𝜎 (𝑡) ≐       .                   (11)
+                           𝑚(𝑡)            𝑚(𝑡)                                          In general, Problem 2 can be reformulated through variable substi-
+     The dynamics, initial and final state constraints are rewritten as              tution and Taylor expansion as follows:
+follows:
+          ̇ = 𝒈𝑚 + 𝒖 (𝑡) ,
+̇ = 𝒗(𝑡), 𝒗(𝑡)
+𝒓(𝑡)                                                                                 Problem 3. Convexified fuel optimal powered descent problem
+𝑧̇ (𝑡) = −𝜆𝜎 (𝑡) , ‖𝒖 (𝑡) ‖2 ⩽ 𝜎 (𝑡) ,                                                                                          𝑡𝑓
+                                                                       (12)                 min         − 𝑧(𝑡𝑓 ) ⇔ min               𝜎 (𝑡)d𝑡
+𝒓(𝑡0 ) = 𝒓0 , 𝒗(𝑡0 ) = 𝒗0 , 𝑧(𝑡0 ) = ln 𝑚wet ,                                             𝒖(𝑡),𝜎(𝑡)             𝒖(𝑡),𝜎(𝑡) ∫0                                                (19)
+𝒓(𝑡𝑓 ) = 𝒓𝑓 , 𝒗(𝑡𝑓 ) = 𝒗𝑓 , 𝑧(𝑡𝑓 ) ≥ ln 𝑚dry .                                       subject to ∶ Eqs. (6), (12), (17), (18).
+    The trust constraint is restated as follows:
+      T                T                                                             3.2. Discretization
+0 < min ≤ 𝜎 (𝑡) ≤ max .                                                (13)
+      𝑚(𝑡)              𝑚(𝑡)
+    Under this transformation, the fuel-optimal objective becomes                        Problem 3 constitutes a convex optimization task, specifically a
+               𝑡𝑓                                                                    SOCP problem. To efficiently solve this problem using convex optimiza-
+ min                𝜎 (𝑡)d𝑡.                                           (14)          tion solvers, it is necessary to discretize the continuous formulation. By
+𝒖(𝑡),𝜎(𝑡) ∫0
+
+
+                                                                               299
+D. Gao et al.                                                                                                                         Acta Astronautica 248 (2026) 296–313
+
+
+defining a new state variable vector 𝑿(𝑡), the discrete system can be                3.3. Improved lossless convexification
+expressed as follows:
+                     [       ]                                                           Problem 4 presents a discrete model that can be directly solved
+ ̇                     𝒖 (𝑡)
+𝑿(𝑡) = 𝑨𝑐 𝑿(𝑡) + 𝑩 𝑐           + 𝑩 𝑐 𝑚 .                        (20)                using convex optimization solvers, enabling convenient modeling and
+                       𝜎 (𝑡)
+                                                                                     solution implementation within frameworks such as CVX or YALMIP.
+where,                                                                               However, this model relies on a Taylor expansion to achieve a con-
+                       [    ]                                                        vex approximation of the inherently non-convex problem, leading to
+       ⎡ 𝒓(𝑡) ⎤
+                         𝒈𝑚                                                          approximation errors that accumulate over time 𝑡. To address this
+𝑿(𝑡) = ⎢ 𝒗(𝑡) ⎥ , 𝑚 =        ,
+       ⎢       ⎥          0                                                          limitation and achieve a more accurate solution to the original problem,
+       ⎣ 𝑧 (𝑡) ⎦
+                                                                       (21)          an iterative refinement algorithm based on the solution of Problem 4
+     ⎡03×3            𝐼3     03×1 ⎤         ⎡03×3         03×1 ⎤                     is proposed.
+𝑨𝑐 = ⎢03×3           03×3    03×1 ⎥ , 𝑩 𝑐 = ⎢ 𝐼3          03×1 ⎥ .
+     ⎢                            ⎥         ⎢                  ⎥                         Let 𝒖(⋅) represent the set {𝒖(𝑡𝑘 ) ∣ 𝑘 = 0, 1, … , 𝑁}, 𝜎(⋅) denote the
+     ⎣01×3           01×3    01×1 ⎦         ⎣01×3          −𝜆 ⎦
+                                                                                     set {𝜎(𝑡𝑘 ) ∣ 𝑘 = 0, 1, … , 𝑁}, and 𝑿(⋅) signify the set {𝑿(𝑡𝑘 ) ∣ 𝑘 =
+   The system is discretized through a zero-order hold (ZOH) ap-                     0, 1, … , 𝑁 + 1}. The solution to Problem 4 is denoted as 𝒖(⋅),
+                                                                                                                                                  ̃    ̃
+                                                                                                                                                       𝜎(⋅),  and
+                                                                                      ̃
+                                                                                     𝑿(⋅).               ̃ 𝑘 ) is given by:
+                                                                                            Accordingly, 𝑧(𝑡
+proach, where the sampling interval 𝛥𝑡 is selected as follows:
+                                                                                        ( ) [           ] ( )
+       𝑡𝑓 − 𝑡0                                                                       𝑧̃ 𝑡𝑘 = 01×6 1 𝑿    ̃ 𝑡𝑘 .                                              (29)
+𝛥𝑡 =             .                                                     (22)
+       𝑁 +1
+                                                                                         Therefore, based on Eq. (29), the original approximation in Eq. (26)
+    Let 𝑿(𝑡𝑘 ) denote the discrete state variable at time 𝑡𝑘 , and let               is transformed into a modified Taylor expansion around 𝑧(𝑡   ̃ 𝑘 ), as fol-
+𝒖(𝑡𝑘 ) and 𝜎(𝑡𝑘 ) represent the discrete control variables. The discretized          lows:
+system equations are expressed as follows:                                                    ( )[   [ ( )     ( )] 1 [ ( )         ( )]2 ]    ( )
+                            [ ( ) ]                                                  Tmin 𝑒−𝑧̃ 𝑡𝑘 1 − 𝑧 𝑡𝑘 − 𝑧̃ 𝑡𝑘 +      𝑧 𝑡𝑘 − 𝑧̃ 𝑡𝑘      ≤ 𝜎 𝑡𝑘 ,
+                                                                                                                       2                                   (30)
+   (     )                     𝒖 𝑡𝑘                                                    ( )            ( )[   [ ( )      ( )]]
+𝑿 𝑡𝑘+1 = 𝑨𝑑 𝑿(𝑡𝑘 ) + 𝑩 𝑑        ( )     + 𝑩 𝑑 𝑚 , 𝑘 = 0, 1, … , 𝑁.    (23)          𝜎 𝑡𝑘 ≤ Tmax 𝑒−𝑧̃ 𝑡𝑘 1 − 𝑧 𝑡𝑘 − 𝑧̃ 𝑡𝑘 .
+                               𝜎 𝑡𝑘
+
+where, the matrices 𝑨𝑑 and 𝑩 𝑑 are computed as follows:                              3.4. Obstacle avoidance using homotopy iteration
+                             𝛥𝑡
+𝑨𝑑 = 𝑒𝑨𝑐 𝛥𝑡 , 𝑩 𝑑 =               𝑒𝑨𝑐 (𝛥𝑡−𝜏) 𝑩 𝑐 d𝜏.                   (24)              To generalize the convex constraints in Eq. (6) to the non-convex
+                        ∫0
+                                                                                     segmented forms in Eqs. (7) and (8), this work employs a homotopy
+   The thrust constraint, initial and terminal state constraints in Eq. (12)         iteration method. By gradually introducing stricter obstacle constraints
+can be converted into a discretized form as follows:                                 to refine collision avoidance, the approach ensures smooth computation
+                                                                                     and generates safe obstacle avoidance trajectories. The core idea is
+                     ( ) ⎡           ⎤
+                                𝒓0
+              ( )
+‖𝒖(𝑡𝑘 )‖2 ⩽ 𝜎 𝑡𝑘 , 𝑿 𝑡0 = ⎢     𝒗0   ⎥,                                              to construct a continuous deformation process that transitions from a
+                           ⎢         ⎥                                               simple convex-constrained path to a complex non-convex-constrained
+                           ⎣ ln 𝑚wet ⎦
+[                    ]        [      ]                                 (25)          path.
+   𝐼3     03×3 03×1     ( )       𝒓𝑓
+                       𝑿 𝑡𝑓 =          ,                                                 First, given a reference trajectory 𝑿 (⋅), Eqs. (6), (7) and (8) are
+  03×3     𝐼3   03×1              𝒗𝑓
+[                ] ( )                                                               unified and expressed as follows:
+ 03×1 03×1 1 𝑿 𝑡𝑓 ≥ ln 𝑚dry .                                                           ( )       ( ( ) )
+                                                                                     𝑟𝑥 𝑡 𝑘 ⩾ 𝐹 𝑿 𝑡 𝑘 , 𝛿 .                                              (31)
+    The conventional glide-slope constraint in (6) and linearized con-                                                                             ( ( ) )
+straints in (17) are described as the following discrete form:                       where, 0 ⩽ 𝛿 ⩽ 1. As for relaxed glide-slope constraint (7), 𝐹 𝑿 𝑡𝑘 , 𝛿
+         ( )[       [ ( )         ( )] 1 [ ( )     ( )]2 ]    ( )                    is calculated as in Box I.
+                                                                                                                         ( ( ) )
+Tmin 𝑒−𝑧𝑙 𝑡𝑘 1 − 𝑧 𝑡𝑘 − 𝑧𝑙 𝑡𝑘 +           𝑧 𝑡𝑘 − 𝑧𝑙 𝑡𝑘     ≤ 𝜎 𝑡𝑘 ,                      For stepwise constraint (8), 𝐹 𝑿 𝑡𝑘 , 𝛿 is calculated as:
+                                       2
+  ( )                ( )[       [ ( )    ( )]]                                                                 √
+𝜎 𝑡𝑘 ≤ Tmax 𝑒−𝑧𝑢 𝑡𝑘 1 − 𝑧 𝑡𝑘 − 𝑧𝑢 𝑡𝑘 ,                              (26)                          ⎧                 ( )2    ( )2
+√                                                                                     ( ( ) ) ⎪0,                 𝑟𝑦 𝑡𝑘 + 𝑟𝑧 𝑡𝑘 ⩽ 𝑙
+    2      2
+   𝑟𝑦,𝑘 + 𝑟𝑧,𝑘 tan 𝛾𝑔𝑠 ≤ 𝑟𝑥,𝑘 .                                                      𝐹 𝑿 𝑡𝑘 , 𝛿 = ⎨                √ ( )       ( )2
+                                                                                                                                                                    (33)
+                                                                                                  ⎪𝛿 ⋅ ℎ,                 2
+                                                                                                               𝑙 ⩽ 𝑟𝑦 𝑡 𝑘 + 𝑟𝑧 𝑡 𝑘
+                                                                                                  ⎩
+where, 𝑘 = 0, 1, … , 𝑁. The intermediate variables are calculated as
+                                                                                         Next, since the obstacle constraints are derived based on the refer-
+follows:
+                                                                                     ence trajectory and, in addition to these constraints, thrust magnitude
+               𝑡𝑓 − 𝑡0
+𝑡𝑘 = 𝛥𝑡 ⋅ 𝑘 =          𝑘,                                                            constraint also exist, directly incorporating Eq. (31) as a constraint
+               𝑁 +1
+   ( )       (              )                                                        may render the problem unsolvable. To address this, a slack variable
+𝑧𝑙 𝑡𝑘 = ln 𝑚wet − 𝜆Tmin 𝑡𝑘 ,                                                         is introduced, and Eq. (31) is further reformulated as follows:
+   ( )       (              )                                          (27)
+𝑧𝑢 𝑡𝑘 = ln 𝑚wet − 𝜆Tmax 𝑡𝑘 ,                                                            ( )      ( ( ) )        ( )
+       [          ] ( )        [                              ]( )                   𝑟𝑥 𝑡 𝑘 ⩾ 𝐹 𝑿 𝑡 𝑘 , 𝛿 + 𝜁 𝑡 𝑘 .                                     (34)
+𝑟𝑥,𝑘 = 1 01×6 𝑿 𝑡𝑘 , 𝑟𝑦,𝑘 = 0                       1    01×5 𝑿 𝑡𝑘 ,
+      [                   ] ( )                                                      where 𝜁 is the slack variable. To ensure that 𝜁 decreases iteratively, the
+𝑟𝑧,𝑘 = 0 0 1 01×4 𝑿 𝑡𝑘 .
+                                                                                     corresponding objective function is formulated as follows:
+   Thus, the discretized formulation of the convexified fuel optimal
+powered descent Problem 3 is as follows:                                                                                                     ∑
+                                                                                                                                             𝑁
+                                                                                                                                                ( )
+                                                                                        min( ) −𝑧(𝑡𝑁+1 ) + 𝑊𝜁 ⋅ ‖𝜁 (⋅)‖2 ⇔      min( ) 𝜆𝛥𝑡     𝜎 𝑡𝑘 + 𝑊𝜁 ⋅ ‖𝜁 (⋅)‖2 .
+                                                                                     𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                             𝒖(𝑡𝑘 ),𝜎 𝑡𝑘     𝑘=0
+Problem 4. Discretized and convexified fuel optimal powered descent
+                                                                                                                                                                    (35)
+problem
+                                                                                         Additionally, to generate the initial trajectory, the conventional
+                                                        ∑
+                                                        𝑁
+                                                           ( )
+       min( ) − 𝑧(𝑡𝑁+1 ) ⇔               min( ) 𝜆𝛥𝑡       𝜎 𝑡𝑘                       glide-slope angle is set to 𝛾𝑔𝑠 = 0, and Problem 4 is solved. The
+   𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                        𝒖(𝑡𝑘 ),𝜎 𝑡𝑘       𝑘=0            (28)          resulting solution, denoted as 𝒖(⋅),
+                                                                                                                    ̃     ̃
+                                                                                                                          𝜎(⋅),     ̃
+                                                                                                                                and 𝑿(⋅), forms the foundation
+subject to ∶ Eqs. (23), (25), (26), (27).                                            for constructing the obstacle avoidance problem as follows:
+
+                                                                               300
+D. Gao et al.                                                                                                                                    Acta Astronautica 248 (2026) 296–313
+
+
+
+                                                      √ ( )          ( )2
+                ⎧                                              2
+                ⎪𝛿 ⋅ 0,
+                     (√                   )
+                                                          𝑟𝑦 𝑡𝑘 + 𝑟𝑧 𝑡𝑘 ⩽ 𝑙1
+                                                            √
+    ( ( ) ) ⎪             ( )2    ( )2                          ( )2     ( )2
+   𝐹 𝑿 𝑡𝑘 , 𝛿 = ⎨𝛿 ⋅    𝑟𝑦 𝑡𝑘 + 𝑟𝑧 𝑡𝑘 − 𝑙1 tan 𝛾𝑛𝑒𝑤 , 𝑙1 < 𝑟𝑦 𝑡𝑘 + 𝑟𝑧 𝑡𝑘 < 𝑙2                                                                                               (32)
+                ⎪                                           √ ( )        ( )2
+                ⎪𝛿 ⋅ ℎ,                                            2
+                                                      𝑙 2 ⩽ 𝑟𝑦 𝑡 𝑘 + 𝑟𝑧 𝑡 𝑘
+                ⎩
+
+
+
+                                                                                             Box I.
+
+Problem 5.             Discrete fuel optimal powered descent with obstacle
+avoidance
+
+                                                                    ∑
+                                                                    𝑁
+                                                                       ( )
+        min( ) − 𝑧(𝑡𝑁+1 ) + 𝑊𝜁 ⋅ ‖𝜁 (⋅)‖2 ⇔            min( ) 𝜆𝛥𝑡     𝜎 𝑡𝑘 + 𝑊𝜁 ⋅ ‖𝜁 (⋅)‖2
+     𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                                    𝒖(𝑡𝑘 ),𝜎 𝑡𝑘
+                                                                    𝑘=0
+
+subject to ∶ Eqs. (23), (25), (30), (34)
+                   Eqs. (32) or (33).
+
+                                                                                       (36)
+
+    Building on the previous discussion, the procedure for the Improved
+lossless convexification algorithm with obstacle avoidance for fuel optimal
+powered descent is outlined in Algorithm 1 as follows:
+
+
+Algorithm 1 Improved lossless convexification algorithm with
+obstacle avoidance for fuel optimal powered descent.
+ 1: Define tolerance 𝜀𝜁 > 0. Define homotopy iteration count 𝐻 ∈ Z+ .                                 Fig. 3. Relationship between optimal fuel consumption and terminal time 𝑡𝑓 .
+ 2: Define iteration count 𝑗 = 0. Define Endflag=false.
+ 3: Initial trajectory: solve Problem 4 with 𝛾𝑔𝑠 = 0 to obtain 𝒖̃ (⋅) , 𝜎̃ (⋅) ,
+    ̃ (⋅).
+    𝑿
+                                                                                                      4.1. Elevation-angle-based convex optimization framework
+ 4: while Endflag=false do
+ 5:  𝑗 = 𝑗 + 1.
+                                                                                                          By employing Algorithm 1, the optimal fuel consumption for a
+ 6:  Assign 𝛿 = min (𝑗, 𝐻) ∕𝐻.
+                  ( ( ) )                                                                             given terminal time 𝑡𝑓 can be obtained. Given the initial and final
+ 7:  Calculate 𝐹 𝑿  ̃ 𝑡𝑘 , 𝛿 according to Eq. (32) or (33).
+                ( )     ( )          ( )         ( )                                                  state conditions, the minimum and maximum landing times can be
+ 8:  Assign 𝑧𝑙 𝑡𝑘 = 𝑧̃ 𝑡𝑘 , 𝑧𝑢 𝑡𝑘 = 𝑧̃ 𝑡𝑘 according to Eq. (30).
+                                                                                                      determined using tools such as GPOPS software or sequential convex
+ 9:  Solve Problem 5. Denote the solution as 𝒖̂ (⋅) , 𝜎̂ (⋅) , 𝑋̂ (⋅).
+                                                                                                      optimization [22]. Alternatively, these terminal times can also be com-
+10:  Compute the norm of the slack variable ‖𝜁 (⋅)‖2 .
+                                                                                                      puted by iteratively executing Algorithm 1 until one of the subproblems
+11:  Check whether the obtained solution satisfies all constraints.
+                                                                                                      becomes infeasible. Based on Algorithm 1 and parameters in Tables
+12:  if All constraints satisfied and ‖𝜁 (⋅)‖2 ⩽ 𝜀𝜁 and 𝑗 ⩾ (𝐻 + 1) then
+                                                                                                      1 and 2, the optimal fuel consumption under stepwise constraint is
+13:     Endflag=true.
+                                                                                                      iteratively computed from the minimum to the maximum terminal
+14:  else
+                                                                                                      time. The relationship between optimal fuel consumption and terminal
+15:     Set the solution 𝒖̂ (⋅) , 𝜎̂ (⋅) , 𝑋̂ (⋅) as the initial trajectory. Assign
+                                                ̃ (⋅) = 𝑋̂ (⋅).                                       time 𝑡𝑓 is presented in Fig. 3.
+            𝒖̃ (⋅) = 𝒖̂ (⋅) , 𝜎̃ (⋅) = 𝜎̂ (⋅) , 𝑿
+                                                                                                          Fig. 3 illustrates the optimal fuel consumption curve. Taking into
+16:     Endflag=false.
+                                                                                                      account the thrust magnitude constraint, the maximum fuel consump-
+17:   end if
+                                                                                                      tion curve is obtained when the thrust is maintained at its maximum
+18: end while
+                                                                                                      level, while the minimum fuel consumption curve corresponds to the
+19: Assign 𝒖∗ (⋅) = 𝒖̂ (⋅) , 𝜎 ∗ (⋅) = 𝜎̂ (⋅) , 𝑋 ∗ (⋅) = 𝑋̂ (⋅).
+                                                                                                      minimum thrust. Given the initial state, which specifies the amount of
+20: return 𝒖∗ (⋅) , 𝜎 ∗ (⋅) , 𝑋 ∗ (⋅) as the fuel optimal solution with obstacle
+                                                                                                      fuel carried, the feasible region can be derived as shown in Fig. 4.
+    avoidance.
+                                                                                                          Conventional fuel optimal convex optimization algorithms [20,24],
+                                                                                                      as well as the proposed Algorithm 1, primarily focus on the lower
+   Algorithm 1 presents a fuel optimal trajectory optimization method
+                                                                                                      bound of the feasible region. However, in practical scenarios, most
+under relaxed glide-slope or stepwise constraint. A homotopy iteration
+                                                                                                      cases lie within the feasible region. Therefore, investigating more rea-
+approach is employed to avoid the issue of gradient explosion caused
+                                                                                                      sonable obstacle avoidance strategies within this feasible region is of
+by first-order derivative calculations in sequential convex optimization.
+                                                                                                      paramount importance.
+                                                                                                          A straightforward approach is to optimize the use of additional
+4. Elevation-angle-based powered descent guidance                                                     fuel beyond the fuel optimal baseline to improve obstacle avoidance
+                                                                                                      and enhance the terminal field of view. In this context, leveraging the
+    In this section, the maximization of the elevation angle in Eq. (3)                               definition of the elevation angle in Eq. (3), the goal is to maximize
+is indirectly incorporated into the convex optimization problem. A                                    altitude while minimizing horizontal distance, thereby achieving a
+new convex optimization framework is proposed, employing an axis-                                     larger elevation angle. This strategy enhances both obstacle avoidance
+weighted position integral as the objective function. This formula-                                   and onboard field of view, as illustrated in Fig. 5.
+tion also enhances obstacle avoidance performance and improves the                                        Based on this idea, a new convex optimization framework is pro-
+terminal field of view.                                                                               posed with an axis-weighted position integral as the objective function:
+
+                                                                                               301
+D. Gao et al.                                                                                                                                               Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                                      Fig. 4. Illustration of feasible area for fuel consumption and terminal time 𝑡𝑓 .
+
+
+                                                                                                   Problem 7. Elevation-angle-based powered descent problem with
+                                                                                                   improved obstacle avoidance
+
+                                                                                                                            ∑
+                                                                                                                            𝑁
+                                                                                                                                    ( ) ∑  𝑁
+                                                                                                                                             | ( )| ∑ | ( )|
+                                                                                                                                                        𝑁
+                                                                                                            min( ) − 𝛼 ⋅          𝑟𝑥 𝑡 𝑘 +   |𝑟𝑦 𝑡𝑘 | +   |𝑟𝑧 𝑡𝑘 | + 𝑊𝜁 ⋅ ‖𝜁 (⋅)‖2
+                                                                                                         𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                         |      |     |      |
+                                                                                                                            𝑘=1               𝑘=1              𝑘=1
+                                                                                                   subject to ∶ Eqs. (23), (25), (30), (34)
+                                                                                                                       Eqs. (32) or (33).
+                                                                                                                                                                                          (40)
+
+                                                                                                   where, it is worth noting that the calculation of 𝑚dry in Problems 6 and
+                                                                                                   7 is based on the initial mass and given fuel consumption, expressed as
+                                                                                                   𝑚dry = 𝑚wet − 𝑚fuel .
+                                 Fig. 5. Enhanced obstacle avoidance.
+                                                                                                       Since the objective function of Problem 7 is convex, Problem 7
+                                                                                                   is still a convex optimization problem. When the obstacle avoidance
+                                                                                                   constraint is conventional glide-slope constraint as shown in Eq. (6),
+                                                                                                   Problem 7 can be solved through a single optimization step. However,
+                   𝑡𝑓 (                                )                                           when the constraint is complex, as defined by Eqs. (32) or (33), a
+ min                  −𝛼 ⋅ 𝑟𝑥 (𝑡) + |𝑟𝑦 (𝑡)| + |𝑟𝑧 (𝑡)| d𝑡.                           (37)         homotopy iteration approach is employed to address the problem.
+𝒖(𝑡),𝜎(𝑡) ∫𝑡
+               0
+                                                                                                       Building on Problems 6 and 7, An elevation-angle-based convex opti-
+where 𝛼 > 0 is a tuning coefficient that regulates the extent to which                             mization algorithm with enhanced obstacle avoidance for powered descent
+the trajectory is biased toward the vertical direction. However, due to                            guidance is outlined in Algorithm 2 as follows:
+fuel constraints, an excessively large value of 𝛼 may lead the optimized
+trajectory to exhibit an undesirable increase in altitude during the ini-                          Algorithm 2 Elevation-angle-based convex optimization algorithm
+tial phase of landing, while limiting altitude adjustment in the terminal                          with enhanced obstacle avoidance for powered descent guidance.
+phase. Therefore, selecting an appropriate range for 𝛼 is essential, and
+                                                                                                    1: Define tolerance 𝜀𝜁 > 0. Define homotopy iteration count 𝐻 ∈ Z+ .
+this will be discussed in detail in Section 4.2
+                                                                                                    2: Define iteration count 𝑗 = 0. Define Endflag=false.
+    The discrete form of the objective function (37) is
+                                                                                                    3: Using Algorithm 1 to calculate the feasible area as shown in Fig. 4.
+                          ∑
+                          𝑁
+                                  ( ) ∑  𝑁
+                                           | ( )| ∑ | ( )|
+                                                        𝑁                                           4: Chose the fuel mass 𝑚𝑓 𝑢𝑒𝑙 and terminal time 𝑡𝑓 in the feasible area.
+   min( ) −𝛼 ⋅                  𝑟𝑥 𝑡 𝑘 +   | 𝑟𝑦 𝑡 𝑘 | +   |𝑟𝑧 𝑡𝑘 |.                   (38)          5: Initial trajectory: solve Problem 6 with selected 𝑚𝑓 𝑢𝑒𝑙 , 𝑡𝑓 and 𝛾𝑔𝑠 = 0
+𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                                |        |     |      |
+                          𝑘=1             𝑘=1           𝑘=1                                                                          ̃ (⋅).
+                                                                                                         to obtain 𝒖̃ (⋅) , 𝜎̃ (⋅) , 𝑿
+    Adopting the objective function as Eq. (38), Problem 4 is converted                             6: while Endflag=false do
+to the following form:                                                                              7:  𝑗 = 𝑗 + 1. Assign 𝛿 = min (𝑗, 𝐻) ∕𝐻.
+                                                                                                                     ( ( ) )
+                                                                                                    8:  Calculate 𝐹 𝑿  ̃ 𝑡𝑘 , 𝛿 according to Eq. (32) or (33).
+                                                                                                                  ( )      ( )          ( )         ( )
+Problem 6. Elevation-angle-based powered descent problem with                                       9:  Assign 𝑧𝑙 𝑡𝑘 = 𝑧̃ 𝑡𝑘 , 𝑧𝑢 𝑡𝑘 = 𝑧̃ 𝑡𝑘 according to Eq. (30).
+basic obstacle avoidance                                                                           10:  Solve Problem 7. Denote the solution as 𝒖̂ (⋅) , 𝜎̂ (⋅) , 𝑋̂ (⋅).
+                                                                                                   11:  Compute the norm of the slack variable ‖𝜁 (⋅)‖2 .
+                                ∑
+                                𝑁
+                                        ( ) ∑  𝑁
+                                                 | ( )| ∑ | ( )|
+                                                            𝑁
+        min( ) − 𝛼 ⋅                  𝑟𝑥 𝑡 𝑘 +   |𝑟𝑦 𝑡𝑘 | +   |𝑟𝑧 𝑡𝑘 |                             12:  Check whether the obtained solution satisfies all constraints.
+     𝒖(𝑡𝑘 ),𝜎 𝑡𝑘                                 |      |     |      |                (39)         13:  if All constraints satisfied and ‖𝜁 (⋅)‖2 ⩽ 𝜀𝜁 and 𝑗 ⩾ (𝐻 + 1) then
+                                𝑘=1             𝑘=1           𝑘=1
+subject to ∶ Eqs. (23), (25), (26), (27).                                                          14:     Endflag=true.
+                                                                                                   15:  else
+   Problem 6 employs conventional glide-slope constraint for obstacle                              16:     Set the solution 𝒖̂ (⋅) , 𝜎̂ (⋅) , 𝑋̂ (⋅) as the initial trajectory. Assign
+avoidance. To resolve the non-convex constraints in Eqs. (32) and (33)                                                                            ̃ (⋅) = 𝑋̂ (⋅).
+                                                                                                              𝒖̃ (⋅) = 𝒖̂ (⋅) , 𝜎̃ (⋅) = 𝜎̂ (⋅) , 𝑿
+within Problem 5, the discrete form of the improved obstacle avoidance                             17:         Endflag=false.
+powered descent problem is formulated as follows:                                                  18:      end if
+
+                                                                                             302
+D. Gao et al.                                                                                                                                     Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                                                                                        Fig. 7. Elevation angles corresponding to different alpha.
+
+
+Fig. 6. Enhanced obstacle avoidance trajectories corresponding to different
+alpha.                                                                                   To account for variations in terminal time, the integral is performed
+                                                                                      with respect to altitude rather than time, as expressed in the following
+                                                                                      formula:
+                                                                                                   𝑟𝑥,0
+19: end while                                                                         𝛹=                  𝜃 d𝑟𝑥
+                                                                                             ∫𝑟𝑥,𝑓
+20: Assign 𝒖∗ (⋅) = 𝒖̂ (⋅) , 𝜎 ∗ (⋅) = 𝜎̂ (⋅) , 𝑋 ∗ (⋅) = 𝑋̂ (⋅).
+                                                                                                   𝑟𝑥,𝑓
+21: return 𝒖∗ (⋅) , 𝜎 ∗ (⋅) , 𝑋 ∗ (⋅) as the fuel optimal solution with en-                                               𝑟𝑥 (𝑡)
+                                                                                         =                arcsin √                           d(−𝑟𝑥 )
+    hanced obstacle avoidance.                                                               ∫𝑟𝑥,0                                                                              (41)
+                                                                                                                        2
+                                                                                                                  𝑟𝑥 (𝑡) + 𝑟𝑦 (𝑡)2 + 𝑟𝑧 (𝑡)2
+
+    Algorithm 2 provides an enhanced obstacle avoidance method ap-
+                                                                                                   𝑡𝑓                       𝑟𝑥 (𝑡)                (        )
+                                                                                         =              arcsin √                                 ⋅ − 𝑣𝑥 (𝑡) d𝑡.
+plicable to any point within the feasible region illustrated in Fig. 4.                      ∫𝑡0
+                                                                                                                   𝑟𝑥 (𝑡)2 + 𝑟𝑦 (𝑡)2 + 𝑟𝑧 (𝑡)2
+The following section analyzes the advantages of this method and the
+impact of parameters within the algorithm.                                            where, the use of the arcsine function helps to resolve ambiguities.
+                                                                                      To facilitate computation, the integral with respect to altitude is then
+                                                                                      transformed into an equivalent time-based integral.
+4.2. The effect of the coefficient 𝛼 on the trajectory
+                                                                                         The discrete form of the integral of the elevation angle is expressed
+                                                                                      as
+    The parameter 𝛼 in the objective function Eq. (38) governs the
+extent to which the overall trajectory is biased toward the vertical                         ∑
+                                                                                             𝑁
+                                                                                                        (         )
+                                                                                      𝛹=            𝜃𝑘 ⋅ −𝑣𝑥 (𝑡𝑘 ) 𝛥𝑡,
+upward direction. A systematic analysis of how varying 𝛼 influences the                      𝑘=1
+trajectory, together with the selection of an appropriate value based on                                                                                                        (42)
+                                                                                                              𝑟𝑥 (𝑡𝑘 )
+well-defined performance metrics, is therefore of critical importance.                𝜃𝑘 = arcsin √                                  .
+                                                                                                   𝑟𝑥 (𝑡𝑘 )2 + 𝑟𝑦 (𝑡𝑘 )2 + 𝑟𝑧 (𝑡𝑘 )2
+    Using the landing parameters provided in Tables 1 and 2, with a fuel
+consumption of 400 kg. The values 𝛼 = 0.1, 0.6, 1.5, 2.5, 5, 10, and 20 are               The integrals of the elevation angle corresponding to different val-
+selected. By applying Algorithm 2, solutions under stepwise constraints               ues of 𝛼 in Figs. 6 and 7 are presented in Fig. 8. As shown in the figure,
+are obtained, and the resulting obstacle avoidance trajectories are                   varying 𝛼 leads to different values of the elevation angle integral.
+illustrated in Fig. 6.                                                                Nevertheless, there exists a range of 𝛼 that yields relatively large
+    According to Fig. 6, it is evident that all trajectories achieve obstacle         integrals.
+avoidance. When 𝛼 is small, such as 𝛼 = 0.1, the overall trajectory                       For a fixed initial state, the value of 𝛼 that maximizes the elevation
+exhibits minimal upward deviation, resulting in the trajectory being                  angle integral can be selected. In cases with non-fixed initial conditions,
+close to the obstacle at the terminal phase. As 𝛼 gradually increases,                such as varying terminal times or fuel constraints, a reasonable range of
+the overall trajectory shifts upward, moving farther away from the                    𝛼 can instead be identified. Based on extensive simulations, the interval
+                                                                                      𝛼 ∈ [0.5, 2] is found to be appropriate. When 𝛼 = 1, the contributions
+obstacle. However, when 𝛼 is large, such as 𝛼 = 10 or 20, the trajectory’s
+                                                                                      of the three axes are equally weighted, it is well-suited for most initial
+significant upward deviation causes the terminal phase to remain close
+                                                                                      conditions and is therefore set as the default in this paper.
+to the obstacle. Thus, both very small and very large values of 𝛼
+are inappropriate. To more effectively evaluate the obstacle avoidance
+                                                                                      4.3. Trajectory analysis under fixed terminal time and varying fuel con-
+performance, the elevation angles corresponding to various 𝛼 values are               sumption
+illustrated in Fig. 7.
+    As shown in Fig. 7, when 𝛼 is small, such as 𝛼 = 0.1, the elevation                   Within the feasible region depicted in Fig. 4, when the terminal time
+angle at the terminal phase is relatively large, but the elevation angle              is fixed, the fuel consumption has both an upper and a lower bound.
+during the obstacle avoidance segment is smaller compared to other                    This subsection analyzes how increased fuel consumption affects the
+trajectories. Conversely, when 𝛼 is large, such as 𝛼 = 10 or 20, the                  elevation angle under a fixed terminal time. Specifically, when the
+terminal elevation angle is significantly smaller than that of other                  terminal time 𝑡𝑓 is set to 80 s and other parameter conditions are as
+trajectories. Therefore, this study adopts the integral of the elevation              listed in Table 1 and 2, the resulting trajectories and elevation angles
+angle as a metric to evaluate suitable value of 𝛼.                                    are presented in Figs. 9 to 12.
+
+                                                                                303
+D. Gao et al.                                                                                                                  Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                             Fig. 8. Integral of elevation angle corresponding to different alpha.
+
+
+
+
+Fig. 9. Enhanced obstacle avoidance trajectories corresponding to different
+fuel consumption.                                                                   Fig. 11. Integral of elevation angle corresponding to different fuel consump-
+                                                                                    tion.
+
+
+
+                                                                                        From Fig. 9, it can be observed that when the fuel consumption
+                                                                                    is optimal, the trajectory lands along the edge of the obstacle. As
+                                                                                    fuel consumption gradually increases, the trajectory shifts more toward
+                                                                                    the vertical upward direction. When the same amount of additional
+                                                                                    fuel is incrementally added, the trajectory changes more significantly
+                                                                                    in the early phase and less so in the later phase. Similarly, Figs. 10
+                                                                                    and 11 demonstrate that as fuel consumption increases, the elevation
+                                                                                    angle changes more noticeably in the early phase and less so in the
+                                                                                    later phase. This is because upward flight must overcome the influence
+                                                                                    of gravitational acceleration, leading to an exponential increase in
+                                                                                    additional fuel consumption. Fig. 12 shows that the objective function
+                                                                                    also decreases with increasing fuel, and hence the trajectory has a
+                                                                                    better obstacle avoidance effect. Therefore, when the terminal time is
+                                                                                    fixed, applying Algorithm 2 with a slight increase in fuel consumption
+                                                                                    can significantly improve obstacle avoidance performance.
+
+                                                                                    4.4. Trajectory analysis under fixed fuel consumption and varying terminal
+   Fig. 10. Elevation angles corresponding to different fuel consumption.           time
+
+                                                                                        Within the feasible region described in Fig. 4, when fuel consump-
+                                                                                    tion is fixed, the terminal time has both an upper and a lower bound. In
+
+                                                                              304
+D. Gao et al.                                                                                                                      Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                                                                          Fig. 14. Elevation angles corresponding to different terminal times.
+
+Fig. 12. Value of the objective function corresponding to different fuel con-
+sumption.
+
+
+
+
+                                                                                      Fig. 15. Integral of elevation angle corresponding to different terminal times.
+Fig. 13. Enhanced obstacle avoidance trajectories corresponding to different
+terminal times.
+
+
+
+this subsection, the effects of terminal time on trajectory characteristics
+and elevation angles are investigated while keeping fuel consumption
+fixed. Specifically, when the fuel consumption is set to 400 kg and
+other parameter conditions are as listed in Tables 1 and 2, the resulting
+trajectories and elevation angles are shown in Figs. 13 to 16.
+    As illustrated in Fig. 13, the landing trajectory closely follows the
+edge of obstacles when the terminal time is set to its maximum or
+minimum values. However, when intermediate terminal time values
+are employed, the trajectory exhibits an upward displacement, with
+the degree of shift varying depending on the specific terminal time.
+Combined with the observations from Figs. 14 to 16, there exists a
+maximum value for the integral of the elevation angle and a minimum
+value for the value of the objective function. Notably, the elevation
+angle integral curve exhibits a single peak, indicating the existence
+of an optimal terminal time configuration for trajectory optimization.
+The terminal times corresponding to the maximum elevation angle
+integral and the minimum objective function value differ. This dis-
+                                                                                      Fig. 16. Value of the objective function corresponding to different terminal
+crepancy arises because the objective function is integrated over time,
+                                                                                      times.
+whereas the elevation angle is integrated over altitude. This distinction
+underscores the rationale for adopting altitude-based integration of the
+elevation angle in this study, as it enables fair comparisons across
+different terminal times.
+
+                                                                                305
+D. Gao et al.                                                                                                                     Acta Astronautica 248 (2026) 296–313
+
+
+                                                                                   Table 1
+                                                                                   Simulation parameters for lander.
+                                                                                    Parameters                         Value                                   Units
+                                                                                    𝑚wet                               1905                                    kg
+                                                                                    𝑚dry                               1405                                    kg
+                                                                                    𝑻 max                              13 258.17                               N
+                                                                                    𝑻 min                              4971.82                                 N
+                                                                                    𝜆                                  5.09 × 10−4                             s∕m
+                                                                                    𝒈𝑚                                 [−3.7114, 0, 0]T                        m∕s2
+
+
+                                                                                   Table 2
+                                                                                   Simulation parameters for constraints.
+                                                                                    Parameters                         Value                                   Units
+                                                                                    𝒓0                                 [1500, 0, 1500]T                        m
+                                                                                    𝒗0                                 [−75, 0, 70]T                           m/s
+                                                                                    𝒓𝑓                                 𝟎3×1                                    m
+                                                                                    𝒗𝑓                                 𝟎3×1                                    m/s
+                                                                                    𝑡𝑓                                 80                                      s
+                                                                                    𝛼                                  1                                       –
+                                                                                    𝑊𝜁                                 103                                     –
+                                                                                    𝑙1                                 100                                     m
+                                                                                    𝑙2                                 500                                     m
+                                                                                    𝑙                                  500                                     m
+                                                                                    ℎ                                  500                                     m
+
+
+
+
+                                                                                   simulation scenario, lander parameters, and obstacle constraints are
+                                                                                   presented. Subsequently, the effectiveness of proposed algorithms are
+                                                                                   validated. Finally, the robustness of the proposed elevation-angle-based
+                                                                                   optimal obstacle avoidance guidance algorithm is tested under various
+                                                                                   initial conditions.
+                                                                                       The proposed algorithms were implemented in MATLAB R2023b us-
+                                                                                   ing the CVX framework [45] and MOSEK solver [46]. Simulations were
+                                                                                   performed on a system featuring an Intel Core i9-13900HX (2.20 GHz)
+                                                                                   processor and 32 GB RAM.
+
+                                                                                   5.1. Scenarios and parameters
+
+                                                                                       The specific parameters for the lander and environment used in this
+                                                                                   study are provided in Table 1, and the initial and terminal positions
+                                                                                   and obstacle constraints are listed in Table 2. Some parameters are
+                                                                                   based on Ref. [20]. The coefficient 𝛼 in Algorithm 2 is set to 𝛼 = 1. In
+                                                                                   the following simulations, if necessary to show the effectiveness of the
+                                                                                   algorithms under varying initial conditions, adjustments will be made
+                                                                                   to the initial position and velocity.
+                                                                                       The convergence tolerance 𝜀𝜁 = 10−6 follows standard practice in
+                                                                                   sequential convex programming. In all simulated cases, the final two-
+Fig. 17. Flowchart of powered descent obstacle avoidance guidance based on         norm of the slack variables ‖𝜁(⋅)‖2 reaches 10−10 , confirming that the
+elevation angle maximization.                                                      relaxed solution tightly satisfies the original non-convex constraints.
+                                                                                   The number of homotopy iterations is set to 𝐻 = 3 after a parametric
+                                                                                   study. With 𝐻 = 3, the algorithm converges within four SCP iterations
+4.5. Elevation-angle-based optimal obstacle avoidance guidance                     and ‖𝜁(⋅)‖2 rapidly decreases to 10−11 , representing the minimum
+                                                                                   number of homotopy steps that yields stable and efficient convergence
+    Based on the analysis in Sections 4.3 and 4.4, the following con-              for the considered landing scenario. The corresponding convergence
+                                                                                   behavior is shown in Fig. 19.
+clusion can be drawn: when the initial position, velocity, and fuel are
+given, and the terminal time is not fixed, there exists an optimal termi-
+                                                                                   5.2. Validation of Algorithm 1
+nal time that maximizes the integral of the elevation angle, thereby
+achieving the best obstacle avoidance and field of view. This is re-
+                                                                                       In this section, the effectiveness of Algorithm 1 is validated through
+ferred to as elevation-angle-based optimal obstacle avoidance. Based on
+                                                                                   simulation examples. First, the thrust results obtained from the im-
+this, the algorithmic framework for obtaining the elevation-angle-based
+                                                                                   proved lossless convexification algorithm are compared with those from
+optimal obstacle avoidance trajectory is presented in Fig. 17.
+                                                                                   the conventional convex optimization algorithms [20,24] to demon-
+                                                                                   strate the effectiveness of the proposed improvements in addressing
+5. Numerical experiments                                                           Taylor expansion errors. Second, fuel optimal trajectories under differ-
+                                                                                   ent obstacle constraints are provided to further validate the effective-
+   In this section, the proposed Algorithm 1, Algorithm 2, and the                 ness of obstacle avoidance.
+elevation-angle-based optimal obstacle avoidance guidance algorithm                    In the first validation, the initial position, velocity, and all other
+outlined in Fig. 17 are applied to the Mars landing problem. First, the            parameters are set according to the values provided in Tables 1 and 2.
+
+                                                                             306
+D. Gao et al.                                                                                                             Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                   Fig. 18. Thrust comparison under varying terminal times for conventional and improved convex optimization methods.
+
+
+
+
+                                              Fig. 19. Iterative process under stepwise constraint with H=3.
+
+
+The obstacle is modeled using the conventional glide-slope constraint                 Table 3 presents a comparison of the performance of the four
+with an angle of 𝛾𝑔𝑠 = 10◦ . The results are presented in Fig. 18.                 methods for the scenario shown in Fig. 18(d). Both proposed algo-
+    The subplots in Fig. 18 reveal that as the terminal time increases,            rithms require only 0.06 s of CPU time, which is comparable to the
+the thrust profile obtained using the conventional convex optimiza-                conventional convex method (0.03 s) and significantly lower than that
+tion method gradually deviates from the maximum–minimum control
+                                                                                   of GPOPS (1.12 s), while achieving nearly identical fuel consumption
+profile, leading to a growing discrepancy between the solution and
+                                                                                   (approximately 505.49 kg). Notably, the proposed methods are capable
+the optimal trajectory. In contrast, the improved convex optimization
+method effectively reduces the Taylor expansion errors that increases              of handling step-shaped obstacles, a feature not supported by the
+with terminal time, thereby yielding solutions that are closer to the true         conventional convex method. Furthermore, Algorithm 2 provides an
+optimal trajectory.                                                                additional advantage by improving the landing field of view.
+
+                                                                             307
+D. Gao et al.                                                                                                                        Acta Astronautica 248 (2026) 296–313
+
+
+                        Table 3
+                        Performance metric of different methods.
+                         Performance metric            Proposed method       Proposed method           Conventional convex    GPOPS
+                                                       (Alg. 1)              (Alg. 2)                  method [20,24]         software [47]
+                         Average CPU time (s)          0.06                  0.06                      0.03                   1.12
+                         (Scenario:Fig. 18 d)
+                         Fuel consumption (kg)         505.49                505.49                    505.51                 505.484
+                         (Scenario:Fig. 18 d)
+                         Step-shaped                   Yes                   Yes                       No                     Yes
+                         obstacle avoidance
+                         Improve field of view         No                    Yes                       No                     Yes
+
+
+
+
+Fig. 20. Obstacle avoidance trajectory under relaxed glide-slope constraint.                Fig. 21. Fuel optimal obstacle avoidance trajectory with 𝑡𝑓 = 100 s.
+
+
+
+    In the second validation, when the obstacle is modeled as a stepwise                of the feasible region is similar to that in Fig. 4. However, unlike
+constraint, as illustrated in Fig. 2, and the initial state is set according to         Fig. 4, the fuel consumption for the minimum landing time coincides
+Table 2. The iterative evolution of the trajectory and the slack variable               with the maximum thrust fuel consumption curve, indicating that the
+norm ‖𝜁 (⋅)‖2 under Algorithm 1 is illustrated in Fig. 19. The figures                  thrust for the minimum landing time under these initial conditions and
+show that the fuel optimal trajectory is achieved after four iterations,                constraints is at full throttle. Additionally, the fuel consumption for the
+successfully accomplishing obstacle avoidance.                                          maximum landing time matches the total fuel carried.
+    When the obstacle is configured as a relaxed glide-slope constraint,
+                                                                                            When the fuel consumption is fixed at 365.18 kg, consistent with
+as shown in Fig. 2, and the initial state is set to 𝒓0 = [1500, 0, 500]T m
+                                                                                        Fig. 20, the results shown in Figs. 23 to 26 are obtained using Algorithm
+and 𝒗0 = [−75, 0, −100]T m∕s, with the remaining parameters given in
+                                                                                        2. The resulting optimal obstacle avoidance trajectory demonstrates
+Table 2, the iterative results for the fuel optimal obstacle avoidance
+                                                                                        enhanced obstacle avoidance and provides a better terminal field of
+trajectory are obtained using Algorithm 1, as illustrated in Fig. 20. The
+                                                                                        view. The resulting optimal obstacle avoidance trajectory exhibits im-
+total fuel consumption in this case is 365.18 kg. From the figure, it can
+be seen that the fuel optimal obstacle avoidance trajectory is achieved                 proved avoidance performance and offers a better terminal field of
+after the same four iterations.                                                         view. However, as observed in the figures, although some improvement
+    When the terminal time in Table 2 is set to 𝑡𝑓 = 100 s, the resulting               is achieved, the enhancement in obstacle avoidance is not particularly
+fuel optimal obstacle avoidance trajectory is shown in Fig. 21, with a                  significant.
+fuel consumption of 409.12 kg. A comparison of Figs. 20 and 21 reveals                      When maintaining a fixed fuel consumption of 409.12 kg, consistent
+that, despite the increase in fuel consumption, there is no significant                 with Fig. 21, by employing Algorithm 2, a series of obstacle avoidance
+improvement in obstacle avoidance performance.                                          trajectories are obtained as shown in Figs. 27 and 28. The integral of
+                                                                                        elevation angle and value of objective function are presented in Figs.
+5.3. Validation of Algorithm 2                                                          29 and 30. The results show a significant improvement in obstacle
+                                                                                        avoidance in Fig. 27 compared to the original trajectory in Fig. 21,
+    In Section 4, simulation and analysis results under stepwise con-                   while maintaining the same fuel consumption and providing a better
+straint were presented. This section sets the obstacle avoidance con-                   terminal field of view.
+straint as the relaxed glide-slope constraint and provides simulation re-
+sults based on Algorithm 2 and elevation-angle-based optimal obstacle
+                                                                                        5.4. Validation of elevation-angle-based optimal obstacle avoidance guid-
+avoidance guidance in Fig. 17.
+                                                                                        ance
+    When the obstacle is configured as a relaxed glide-slope con-
+straint, the initial state is set to 𝒓0 = [1500, 0, 500]T m and 𝒗0 =
+[−75, 0, −100]T m∕s, consistent with Fig. 20, and the remaining parame-                     In this section, to maintain consistency with Fig. 4, stepwise con-
+ters are as listed in Table 2. First, using Algorithm 1, the feasible region            straint is applied, and the initial conditions are set as shown in Table
+for fuel consumption and terminal time is obtained, as shown in Fig.                    1 and 2. Based on the analyses in Section 4.4 and Section 4.5, when
+22.                                                                                     fuel consumption is fixed, utilizing the guidance flowchart in Fig.
+    From Fig. 22, it can be observed that the fuel optimal curve with                   17 yields an optimal obstacle avoidance trajectory. When the mass
+respect to time exhibits a unimodal shape, and the overall structure                    varies, the results are shown in Figs. 31 and 32. Fig. 31 illustrates the
+
+                                                                                  308
+D. Gao et al.                                                                                                                     Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                                        Fig. 22. Illustration of feasible area for fuel consumption and terminal time 𝑡𝑓 .
+
+
+
+
+Fig. 23. Enhanced obstacle avoidance trajectories corresponding to different
+terminal times.                                                                      Fig. 25. Integral of elevation angle corresponding to different terminal times.
+
+
+
+
+     Fig. 24. Elevation angles corresponding to different terminal times.            Fig. 26. Value of the objective function corresponding to different terminal
+                                                                                     times.
+
+
+relationship between the elevation angle integral and the terminal time
+under different fuel consumption, while Fig. 32 depicts the relationship                From Fig. 31, it can be observed that when the terminal time 𝑡𝑓
+between the objective function value and the terminal time under                     remains constant, the integral of the elevation angle increases with
+different fuel consumption.                                                          higher fuel consumption. When fuel consumption is fixed, the integral
+
+                                                                               309
+D. Gao et al.                                                                                                                       Acta Astronautica 248 (2026) 296–313
+
+
+
+
+Fig. 27. Enhanced obstacle avoidance trajectories corresponding to different
+                                                                                        Fig. 30. Value of the objective function corresponding to different terminal
+terminal times.
+                                                                                        times.
+
+
+
+
+     Fig. 28. Elevation angles corresponding to different terminal times.
+
+
+
+
+                                                                                        Fig. 31. Integral of elevation angle corresponding to different terminal times
+                                                                                        and fuel consumption.
+
+
+
+                                                                                        of the elevation angle as a function of time exhibits a unimodal curve,
+                                                                                        with a distinct maximum value. Additionally, for the same integral
+                                                                                        of the elevation angle, there exists a range of fuel and terminal time
+                                                                                        pairs, meaning that both lower and higher fuel consumption can yield
+                                                                                        the same effect. In such cases, selecting the lower fuel consumption
+                                                                                        is appropriate. As shown in Fig. 31, the variations in the elevation
+                                                                                        angle integral caused by changes in terminal time are less pronounced
+                                                                                        at lower fuel consumption levels, but they become more significant as
+                                                                                        fuel consumption increases. This also explains the differing degrees of
+                                                                                        trajectory variation observed in Figs. 20 and 21.
+                                                                                            From Fig. 32, it can be observed that the value of objective function
+                                                                                        exhibits a trend similar to that of the integral of elevation angle. When
+                                                                                        the terminal time 𝑡𝑓 remains constant, the objective function value
+Fig. 29. Integral of elevation angle corresponding to different terminal times.         decreases as fuel consumption increases. When fuel consumption is
+                                                                                        fixed, the objective function value as a function of time follows a
+                                                                                        unimodal curve, with a distinct minimum value. Additionally, for the
+                                                                                        same objective function value, there also exists a range of fuel and
+                                                                                        terminal time pairs.
+
+                                                                                  310
+D. Gao et al.                                                                                                                        Acta Astronautica 248 (2026) 296–313
+
+
+                                                                                    Table 4
+                                                                                    Initial conditions for two-dimensional cases.
+                                                                                     Cases    Initial position 𝒓0 (m)   Initial velocity 𝒗0 (m/s)   Terminal time 𝑡𝑓 (s)
+                                                                                     Case 1   [1500, 0, −2000]T         [−75, 0, −10]T              80
+                                                                                     Case 2   [1500, 0, −1000]T         [−75, 0, −50]T              80
+                                                                                     Case 3   [1500, 0, 0]T             [−75, 0, −40]T              60
+                                                                                     Case 4   [1500, 0, 1000]T          [−75, 0, −10]T              60
+                                                                                     Case 5   [1500, 0, 2000]T          [−75, 0, −30]T              80
+
+
+
+
+Fig. 32. Objective value corresponding to different terminal times and fuel
+consumption.
+
+
+                                                                                     Fig. 34. Obstacle avoidance trajectories under different initial conditions.
+
+
+                                                                                    Table 5
+                                                                                    Initial conditions for 3-DoF cases.
+                                                                                     Cases    Initial position 𝒓0 (m)   Initial velocity 𝒗0 (m/s)   Terminal time 𝑡𝑓 (s)
+                                                                                     Case 1   [1500, 2000, 500]T        [−75, −20, 10]T             80
+                                                                                     Case 2   [1500, 500, 2000]T        [−75, 0, −30]T              80
+                                                                                     Case 3   [1500, 1000, 2000]T       [−75, 20, 20]T              80
+                                                                                     Case 4   [1500, 2000, 1000]T       [−75, −10, 10]T             80
+                                                                                     Case 5   [1500, 2000, 2000]T       [−75, 10, −10]T             80
+
+
+
+
+                                                                                    5.5. Robustness of algorithms and 3-DoF cases
+
+                                                                                    5.5.1. Robustness under different initial conditions
+                                                                                       In this section, the robustness of Algorithm 1 and the elevation-
+                                                                                    angle-based optimal obstacle avoidance guidance method illustrated
+                                                                                    in Fig. 17 is evaluated under different initial conditions. The initial
+                                                                                    conditions are set as shown in Table 4. By applying Algorithm 1 and
+                                                                                    flowchart in Fig. 17, the fuel-optimal trajectories and the elevation-
+Fig. 33. Optimal integral of elevation angle and optimal objective value in         angle-optimal trajectories are obtained, yielding the results illustrated
+feasible area.                                                                      in Fig. 34, where the dashed line indicates results of Algorithm 1
+                                                                                    and the solid line indicates results of Algorithm in Fig. 17. The fuel
+                                                                                    consumption of the optimal obstacle avoidance guidance is based on
+    However, since the objective function is an axis-weighted position              the fuel consumption obtained from Algorithm 1 and remains the same.
+integral evaluated over time, it is not ideal for accurately comparing                 From Fig. 34, it can be seen that all trajectories successfully avoid
+trajectories with different terminal times. In contrast, integrating the            obstacles. The elevation angle-based method, however, offers a better
+elevation angle over altitude provides a fairer basis for evaluating field-         terminal field of view while maintaining equivalent fuel consumption.
+of-view performance, making it more suitable for selecting the optimal              Additionally, this method achieves significantly reduced lateral velocity
+                                                                                    during final descent, thereby enhancing landing safety.
+trajectory.
+    Therefore, for a given fuel consumption, there exists an optimal
+                                                                                    5.5.2. 3-DoF cases
+terminal time that maximizes the elevation angle integral. By plotting
+                                                                                        Unlike the analytical guidance, the optimization method can be
+these data points within the feasible region, an optimal curve can be
+                                                                                    directly applied to 3-DoF cases, with the initial conditions as in Table
+derived, as shown in Fig. 33. The figure shows that the overall trends              5 and the corresponding results as shown in Fig. 35, where the dashed
+of the two optimal curves are consistent. Consequently, for any given               line denotes the fuel optimal and the solid line denotes the elevation-
+fuel consumption within the feasible region, both the solution that                 angle-based optimal obstacle avoidance. The fuel consumption of the
+maximizes the elevation angle and the one that minimizes the objective              optimal obstacle avoidance guidance is based on the fuel consumption
+function can be directly determined from these curves.                              obtained from Algorithm 1 and remains the same.
+
+                                                                              311
+D. Gao et al.                                                                                                                      Acta Astronautica 248 (2026) 296–313
+
+
+
+
+                   Fig. 35. Obstacle avoidance trajectories under different 3-DoF cases and their projections onto XY, XZ, and YZ planes.
+
+
+    As shown in Fig. 35, under different conditions, both Algorithm 1             CRediT authorship contribution statement
+and the optimal obstacle avoidance guidance in Fig. 34 successfully
+achieve effective obstacle avoidance. However, given the same fuel con-              Duozhi Gao: Writing – review & editing, Writing – original draft,
+sumption, the optimal obstacle avoidance guidance provides superior               Visualization, Investigation, Conceptualization. Youmin Gong: Vali-
+terminal field of view and improved obstacle avoidance performance                dation, Supervision. Yanning Guo: Validation, Supervision, Funding
+in comparison.                                                                    acquisition. Yizheng Xiao: Validation. Edoardo Fadda: Validation,
+                                                                                  Supervision. Paolo Brandimarte: Validation, Supervision.
+6. Conclusions
+                                                                                  Declaration of competing interest
+    This paper introduced an elevation-angle-based convex optimization
+framework for obstacle avoidance guidance during the Mars powered                     The authors declare that they have no known competing finan-
+descent phase. The proposed method integrates relaxed glide-slope and             cial interests or personal relationships that could have appeared to
+stepwise obstacle constraints while enhancing the terminal field of view          influence the work reported in this paper.
+to enable near-vertical landing. Scenario analyses reveal that under
+fixed fuel and terminal time, the trajectory shape can be modulated               Acknowledgments
+via objective function coefficients, with feasible ranges determined by
+the elevation-angle integral. When terminal time is fixed, increased fuel            This work was supported by the National Natural Science Foun-
+consumption improves the elevation angle, though with diminishing                 dation of China (Grant Nos. U23B6001 and 62473110), the Natural
+returns. Under fixed fuel consumption, the algorithm achieves superior            Science Foundation of Heilongjiang Province (Grant No. LH2022F023),
+obstacle avoidance and enhanced terminal visibility without exceed-               and the China Scholarship Council (Grant No. 202306120358).
+ing the fuel budget. Based on these findings, a guidance framework
+utilizing the optimal elevation-angle integral is constructed, which              References
+improves obstacle avoidance while preserving fuel efficiency. The re-
+sulting near-vertical landing configuration also substantially mitigates           [1] N. Bernardini, N. Baresi, R. Armellin, State-dependent trust region for successive
+lateral tipping risk, thereby enhancing landing safety. Future work                    convex programming for autonomous spacecraft, Astrodynamics 8 (4) (2024)
+                                                                                       553–575.
+will extend this framework to 6-DoF powered descent scenarios, where               [2] Q. Zhu, W. Wang, S. Li, Z. Li, C. Cai, J. Qin, High-reliability and high-precision
+the near-vertical landing property is expected to further reduce lander                braking and capture control technology of Tianwen-1 probe, Space: Sci. Technol.
+tipping risk.                                                                          4 (2024) 0125.
+
+
+                                                                            312
+D. Gao et al.                                                                                                                                   Acta Astronautica 248 (2026) 296–313
+
+
+ [3] J. Chai, Y. Gong, J. Mei, G. Ma, W. Wu, Descent-trajectory planning of a multi-            [26] M. Sagliano, Generalized hp pseudospectral-convex programming for powered
+     node flexible small celestial body lander in hazardous terrains, Astrodynamics 9                descent and landing, J. Guid. Control Dyn. 42 (7) (2019) 1562–1570.
+     (4) (2025) 605–619.                                                                        [27] Y. Song, X. Miao, S. Gong, Adaptive powered descent guidance based on
+ [4] Y. Liu, Y. Lin, Key scientific questions for future lunar exploration, Space: Sci.              multi-phase pseudospectral convex optimization, Acta Astronaut. 180 (2021)
+     Technol. 4 (2024) 0241.                                                                         386–397.
+ [5] X. Liu, S. Li, M. Xin, Comparison of powered descent guidance laws for planetary           [28] X. Jiang, S. Li, T. Tao, Computational guidance for planetary powered descent
+     pin-point landing, Acta Astronaut. 187 (2021) 101–114.                                          using collaborative optimization, Aerosp. Sci. Technol. 76 (2018) 37–48.
+ [6] Y. Gong, Y. Guo, D. Li, G. Ma, Mars landing feedback guidance for non-concave              [29] P. Zhang, L. Cheng, S. Gong, Fast trajectory replanning for cooperative vehicles
+     trajectory construction, Aerosp. Sci. Technol. 137 (2023) 108303.                               using sequential convex programming, Astrodynamics 9 (3) (2025) 369–388.
+ [7] X. Liu, S. Li, M. Xin, Survey of trajectory optimization methods for Mars entry            [30] L. Ma, K. Wang, Z. Xu, Z. Shao, Z. Song, L.T. Biegler, Trajectory optimization
+     and powered descent, J. Guid. Control Dyn. 49 (1) (2026) 216–239.                               for lunar rover performing vertical takeoff vertical landing maneuvers in the
+ [8] Y. Zhang, T. Zeng, Y. Guo, G. Ma, Mars powered descent phase guidance law                       presence of terrain, Acta Astronaut. 146 (2018) 289–299.
+     based on reinforcement learning for collision avoidance, Internat. J. Robust               [31] J. Wang, H. Li, H. Chen, An iterative convex programming method for rocket
+     Nonlinear Control 33 (17) (2023) 10378–10392.                                                   landing trajectory optimization, J. Astronaut. Sci. 67 (4) (2020) 1553–1574.
+ [9] A.R. Klumpp, Apollo lunar descent guidance, Automatica 10 (2) (1974) 133–146.              [32] D. Malyuta, B. Açıkmeşe, Fast homotopy for spacecraft rendezvous trajectory
+[10] Y. Gong, Y. Guo, Y. Lyu, G. Ma, P. Wang, Hybrid zero-effort-miss/zero-effort-                   optimization with discrete logic, J. Guid. Control Dyn. 46 (7) (2023) 1262–1279.
+     velocity guidance for powered descent phase, J. Guid. Control Dyn. 47 (5) (2024)           [33] M. Zhao, B. Pan, X. Hou, L. Huang, Smoothing-homotopy-based sequential
+     1026–1037.                                                                                      convex programming for trajectory optimization, Aerosp. Sci. Technol. 159
+[11] P. Lu, Augmented Apollo powered descent guidance, J. Guid. Control Dyn. 42                      (2025) 109995.
+     (3) (2019) 447–457.                                                                        [34] M. Zhao, B. Pan, S. Lu, X. Hou, Modified smoothing-homotopy-based sequential
+[12] P. Lu, Theory of fractional-polynomial powered descent guidance, J. Guid.                       convex programming for ascent trajectory optimization with path constraints,
+     Control Dyn. 43 (3) (2020) 398–409.                                                             Acta Astronaut. 234 (2025) 632–643.
+[13] Y. Guo, M. Hawkins, B. Wie, Waypoint-optimized zero-effort-miss/zero-effort-               [35] B. Pan, Y. Ran, M. Zhao, Generalized Gaussian smoothing homotopy method
+     velocity feedback guidance for Mars landing, J. Guid. Control Dyn. 36 (3) (2013)                for solving nonlinear optimal control problems, Acta Astronaut. 229 (2025)
+     799–809.                                                                                        311–321.
+[14] Y. Gong, Y. Guo, G. Ma, Y. Zhang, M. Guo, Barrier lyapunov function-based plan-            [36] B. Pan, Y. Ran, W. Qing, M. Zhao, Heat-equation-based smoothing homotopy
+     etary landing guidance for hazardous terrains, IEEE/ASME Trans. Mechatronics                    method for nonlinear optimal control problems, J. Guid. Control Dyn. 48 (2)
+     27 (5) (2021) 2764–2774.                                                                        (2025) 297–310.
+[15] B. Zhu, Y. Gong, J. Mei, G. Ma, Augmented-zero-effort-miss/zero-effort-velocity            [37] W. Qing, B. Pan, Y. Ran, C. Zhu, Mainardi smoothing homotopy method
+     guidance with adaptive collision avoidance, IEEE Trans. Aerosp. Electron. Syst.                 for solving nonlinear optimal control problems, Acta Astronaut. 224 (2024)
+     61 (4) (2025) 8112–8126.                                                                        471–485.
+[16] P. Cui, T. Qin, S. Zhu, Y. Liu, R. Xu, Z. Yu, Trajectory curvature guidance for            [38] P. Cui, D. Zhao, S. Zhu, Obstacle avoidance guidance for planetary landing using
+     Mars landings in hazardous terrains, Automatica 93 (2018) 161–171.                              convex trajectory and adaptive curvature regulation, Acta Astronaut. 199 (2022)
+[17] Y. Gong, Y. Guo, Y. Lyu, D. Li, G. Ma, Fast fixed-time three-dimensional terminal               313–326.
+     guidance with non-concave trajectory constraint, Chin. J. Aeronaut. 37 (3) (2024)          [39] J. Long, P. Cui, S. Zhu, Vector trajectory method for obstacle avoidance con-
+     208–218.                                                                                        strained planetary landing trajectory optimization, IEEE Trans. Aerosp. Electron.
+[18] P. Wang, Y. Guo, G. Ma, B. Wie, Two-phase zero-effort-miss/zero-effort-velocity                 Syst. 58 (4) (2022) 2996–3010.
+     guidance for Mars landing, J. Guid. Control Dyn. 44 (1) (2021) 75–87.                      [40] C. Bai, J. Guo, H. Zheng, Optimal guidance for planetary landing in hazardous
+[19] X. Jiang, S. Li, R. Furfaro, Integrated guidance for Mars entry and powered                     terrains, IEEE Trans. Aerosp. Electron. Syst. 56 (4) (2019) 2896–2909.
+     descent using reinforcement learning and pseudospectral method, Acta Astronaut.            [41] Y. Liu, M. Dong, M. Wang, J. Luo, A powered descent trajectory planning method
+     163 (2019) 114–129.                                                                             with quantitative consideration of safe distance to obstacle, Acta Astronaut. 219
+[20] B. Açıkmeşe, S.R. Ploen, Convex programming approach to powered descent                         (2024) 847–857.
+     guidance for Mars landing, J. Guid. Control Dyn. 30 (5) (2007) 1353–1366.                  [42] Y. Gong, Y. Guo, G. Ma, Y. Zhang, M. Guo, Prescribed performance-based
+[21] M. Sagliano, Pseudospectral convex optimization for powered descent and                         powered descent guidance for step-shaped hazardous terrains, IEEE Trans.
+     landing, J. Guid. Control Dyn. 41 (2) (2018) 320–334.                                           Aerosp. Electron. Syst. 58 (2) (2021) 1083–1095.
+[22] D. Gao, Y. Gong, C. Li, Y. Guo, E. Fadda, P. Brandimarte, Adaptive pseudospec-             [43] H. Yang, J. Long, Z. Liang, R. Xu, S. Zhu, Collision probability sliding mode
+     tral successive convex optimization for six-degree-of-freedom powered descent                   guidance for spacecraft autonomous obstacle avoidance under state uncertainty,
+     guidance, Aerosp. Sci. Technol. 155 (2024) 109544.                                              Aerosp. Sci. Technol. 155 (2024) 109547.
+[23] K. Chen, D. Zhang, K. Wang, Z. Shao, L.T. Biegler, Nonlinear homotopy interior-            [44] Y. Xiao, Y. Gong, J. Mei, G. Ma, W. Wu, Robust optimal powered descent
+     point algorithm for 6-DoF powered landing guidance, Aerosp. Sci. Technol. 127                   guidance via model predictive convex programming, Aerosp. Sci. Technol. (2025)
+     (2022) 107707.                                                                                  109999.
+[24] L. Blackmore, B. Açıkmeşe, D.P. Scharf, Minimum-landing-error powered-descent              [45] M. Grant, S. Boyd, CVX: Matlab software for disciplined convex programming,
+     guidance for Mars landing using convex optimization, J. Guid. Control Dyn. 33                   version 2.2, 2014, Available at http://cvxr.com/cvx.
+     (4) (2010) 1161–1171.                                                                      [46] MOSEK optimization toolbox for MATLAB manual, version 10.1, 2024, Available
+[25] D.P. Scharf, B. Açıkmeşe, D. Dueri, J. Benito, J. Casoliva, Implementation                      at https://www.mosek.com.
+     and experimental demonstration of onboard powered-descent guidance, J. Guid.               [47] M.A. Patterson, A.V. Rao, GPOPS-II: A MATLAB software for solving multiple-
+     Control Dyn. 40 (2) (2017) 213–229.                                                             phase optimal control problems using hp-adaptive Gaussian quadrature collo-
+                                                                                                     cation methods and sparse nonlinear programming, ACM Trans. Math. Softw.
+                                                                                                     (TOMS) 41 (1) (2014) 1–37.
+
+
+
+
+                                                                                          313
+
