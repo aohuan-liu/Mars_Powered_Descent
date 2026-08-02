@@ -1,0 +1,18 @@
+﻿# Codex
+.codex/
+.agents/
+
+# OCRL lecture PDFs
+OCRL/**/*.pdf
+
+# Embedded git repos
+**/.git/
+
+# MATLAB / Simulink
+*.slxc
+*.slx.autosave
+slprj/
+*.m~
+
+# Embedded git repo
+matlab_mcp/simulink-agentic-toolkit/

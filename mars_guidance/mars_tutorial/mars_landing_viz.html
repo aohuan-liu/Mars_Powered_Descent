@@ -1,0 +1,337 @@
+ <!DOCTYPE html>
+ <html lang="zh-CN">
+ <head>
+ <meta charset="UTF-8">
+ <title>火星动力下降制导 — 3D 轨迹可视化</title>
+ <style>
+ * { margin: 0; padding: 0; box-sizing: border-box; }
+ body { background: #0a0a1a; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+ #info {
+   position: absolute; top: 20px; left: 20px; color: #fff;
+   background: rgba(0,0,0,0.7); padding: 16px 24px; border-radius: 12px;
+   backdrop-filter: blur(8px); z-index: 10; min-width: 200px;
+   border: 1px solid rgba(255,255,255,0.1);
+ }
+ #info h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+ #info p { font-size: 13px; opacity: 0.7; }
+ #controls {
+   position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+   z-index: 10; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+   padding: 12px 24px; border-radius: 30px; display: flex; align-items: center;
+   gap: 16px; border: 1px solid rgba(255,255,255,0.1);
+   color: #fff; font-size: 14px; min-width: 360px;
+ }
+ #controls button {
+   background: #e85d04; border: none; color: #fff; width: 36px; height: 36px;
+   border-radius: 50%; cursor: pointer; font-size: 16px;
+   display: flex; align-items: center; justify-content: center;
+   transition: all 0.2s;
+ }
+ #controls button:hover { background: #f48c06; transform: scale(1.05); }
+ #controls input[type="range"] {
+   flex: 1; accent-color: #e85d04; cursor: pointer; height: 4px;
+ }
+ #time-label { min-width: 60px; text-align: center; font-variant-numeric: tabular-nums; }
+ #stats {
+   position: absolute; bottom: 100px; left: 20px; z-index: 10;
+   color: rgba(255,255,255,0.6); font-size: 12px; font-family: monospace;
+   background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 8px;
+   backdrop-filter: blur(4px); line-height: 1.6;
+ }
+ .legend {
+   position: absolute; bottom: 100px; right: 20px; z-index: 10;
+   color: #fff; font-size: 12px; background: rgba(0,0,0,0.6);
+   padding: 12px 16px; border-radius: 10px; backdrop-filter: blur(4px);
+   border: 1px solid rgba(255,255,255,0.08);
+ }
+ .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+ .legend-dot { width: 12px; height: 3px; border-radius: 2px; }
+ </style>
+ </head>
+ <body>
+ <div id="info">
+   <h1>🪐 火星动力下降制导</h1>
+   <p id="phase-label">凸优化 MPC · 离线计算演示</p>
+ </div>
+ 
+ <div id="stats">
+   <div>高度: <span id="stat-alt">—</span> m</div>
+   <div>速度: <span id="stat-vel">—</span> m/s</div>
+   <div>燃料: <span id="stat-fuel">—</span>%</div>
+ </div>
+ 
+ <div class="legend">
+   <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>MPC 最优轨迹</div>
+   <div class="legend-item"><div class="legend-dot" style="background:#4ecdc4"></div>下滑角约束边界</div>
+   <div class="legend-item"><div class="legend-dot" style="background:#ffd700; height:6px; width:6px; border-radius:50%"></div>着陆器位置</div>
+ </div>
+ 
+ <div id="controls">
+   <button id="play-btn">▶</button>
+   <span style="opacity:0.5;font-size:12px" id="current-frame">0%</span>
+   <input type="range" id="timeline" min="0" max="100" value="0">
+   <span id="time-label">t = 0.0s</span>
+ </div>
+ 
+ <script type="importmap">
+ {
+   "imports": {
+     "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+     "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+   }
+ }
+ </script>
+ 
+ <script type="module">
+ import * as THREE from 'three';
+ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+ 
+ // ── Scene ──
+ const scene = new THREE.Scene();
+ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50000);
+ camera.position.set(3000, 2000, 4000);
+ camera.lookAt(0, 0, 0);
+ 
+ const renderer = new THREE.WebGLRenderer({ antialias: true });
+ renderer.setSize(window.innerWidth, window.innerHeight);
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+ renderer.shadowMap.enabled = true;
+ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+ renderer.toneMapping = THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure = 0.8;
+ document.body.prepend(renderer.domElement);
+ 
+ const controls = new OrbitControls(camera, renderer.domElement);
+ controls.target.set(0, 500, 0);
+ controls.enableDamping = true;
+ controls.dampingFactor = 0.08;
+ controls.maxPolarAngle = Math.PI / 2.1;
+ controls.minDistance = 500;
+ controls.maxDistance = 10000;
+ 
+ // ── Lighting ──
+ const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+ scene.add(ambientLight);
+ 
+ const sunLight = new THREE.DirectionalLight(0xffeedd, 1.8);
+ sunLight.position.set(2000, 5000, 3000);
+ sunLight.castShadow = true;
+ sunLight.shadow.mapSize.width = 2048;
+ sunLight.shadow.mapSize.height = 2048;
+ sunLight.shadow.camera.near = 100;
+ sunLight.shadow.camera.far = 10000;
+ sunLight.shadow.camera.left = -4000;
+ sunLight.shadow.camera.right = 4000;
+ sunLight.shadow.camera.top = 4000;
+ sunLight.shadow.camera.bottom = -4000;
+ scene.add(sunLight);
+ 
+ const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+ fillLight.position.set(-2000, 1000, -2000);
+ scene.add(fillLight);
+ 
+ // ── Sky (stars) ──
+ const starsGeo = new THREE.BufferGeometry();
+ const starCount = 3000;
+ const starPos = new Float32Array(starCount * 3);
+ for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 80000;
+ starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+ const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2, transparent: true, opacity: 0.8 });
+ scene.add(new THREE.Points(starsGeo, starsMat));
+ 
+ // ── Mars Surface ──
+ const surfaceGeo = new THREE.PlaneGeometry(12000, 12000, 80, 80);
+ const positions = surfaceGeo.attributes.position.array;
+ for (let i = 0; i < positions.length; i += 3) {
+   const x = positions[i], y = positions[i+1];
+   positions[i+2] = (Math.sin(x * 0.008) * Math.cos(y * 0.01) * 15 +
+                     Math.sin(x * 0.02 + y * 0.015) * 8 +
+                     Math.random() * 3);
+ }
+ surfaceGeo.computeVertexNormals();
+ 
+ const surfaceMat = new THREE.MeshStandardMaterial({
+   color: 0x9c5432, roughness: 0.9, metalness: 0.1,
+   flatShading: false, side: THREE.DoubleSide
+ });
+ const surface = new THREE.Mesh(surfaceGeo, surfaceMat);
+ surface.rotation.x = -Math.PI / 2;
+ surface.receiveShadow = true;
+ scene.add(surface);
+ 
+ // ── Obstacle (a mountain/cone) ──
+ const obsGroup = new THREE.Group();
+ const obsMat = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8, metalness: 0.1 });
+ const cone = new THREE.Mesh(new THREE.ConeGeometry(300, 250, 16), obsMat);
+ cone.position.set(0, 125, 0);
+ cone.castShadow = true;
+ obsGroup.add(cone);
+ obsGroup.position.set(-400, 0, -300);
+ scene.add(obsGroup);
+ 
+ // ── Second obstacle ──
+ const obsMat2 = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.8, metalness: 0.1 });
+ const cone2 = new THREE.Mesh(new THREE.ConeGeometry(200, 180, 16), obsMat2);
+ cone2.position.set(500, 90, 200);
+ cone2.castShadow = true;
+ scene.add(cone2);
+ 
+ // ── Glide-slope cone (transparent wireframe) ──
+ function makeGlideCone(color) {
+   const g = new THREE.ConeGeometry(1600, 2000, 32);
+   const m = new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.08 });
+   const mesh = new THREE.Mesh(g, m);
+   mesh.position.set(0, 1000, 0);
+   return mesh;
+ }
+ scene.add(makeGlideCone(0x4ecdc4));
+ 
+ // ── Generate synthetic trajectory ──
+ function generateTrajectory(n = 100) {
+   const pts = [];
+   const tArray = [];
+   for (let i = 0; i <= n; i++) {
+     const t = i / n;
+     const alt = 2000 * (1 - t) + 200 * Math.sin(t * Math.PI) * (1 - t * 0.5);
+     // Avoid obstacle: slight rightward curve
+     const x = -300 * t + 200 * Math.sin(t * Math.PI * 1.2);
+     const z = 200 * t - 100 * Math.sin(t * Math.PI * 1.5);
+     pts.push([x, alt, z]);
+     tArray.push(t);
+   }
+   return { points: pts, time: tArray };
+ }
+ 
+ const traj = generateTrajectory(80);
+ const totalFrames = traj.points.length;
+ let currentFrame = 0;
+ let isPlaying = false;
+ 
+ // ── Trajectory line ──
+ const trajPoints = traj.points.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+ const curve = new THREE.CatmullRomCurve3(trajPoints, false);
+ const curvePoints = curve.getPoints(200);
+ const lineGeo = new THREE.BufferGeometry().setFromPoints(curvePoints);
+ const lineMat = new THREE.LineBasicMaterial({ color: 0xff6b35, linewidth: 2 });
+ const trajLine = new THREE.Line(lineGeo, lineMat);
+ scene.add(trajLine);
+ 
+ // ── Glow effect on trajectory ──
+ const glowGeo = new THREE.BufferGeometry().setFromPoints(curvePoints);
+ const glowMat = new THREE.LineBasicMaterial({ color: 0xff6b35, transparent: true, opacity: 0.2, linewidth: 4 });
+ const glowLine = new THREE.Line(glowGeo, glowMat);
+ glowLine.position.y = -2;
+ scene.add(glowLine);
+ 
+ // ── Waypoint dots ──
+ const dotMat = new THREE.PointsMaterial({ color: 0xff6b35, size: 8, transparent: true, opacity: 0.3 });
+ const dotGeo = new THREE.BufferGeometry().setFromPoints(trajPoints.filter((_,i) => i % 8 === 0));
+ scene.add(new THREE.Points(dotGeo, dotMat));
+ 
+ // ── Lander marker ──
+ const landerGroup = new THREE.Group();
+ // Body
+ const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.6, roughness: 0.3 });
+ const body = new THREE.Mesh(new THREE.OctahedronGeometry(20, 0), bodyMat);
+ body.castShadow = true;
+ landerGroup.add(body);
+ // Glow ring
+ const ringMat = new THREE.MeshBasicMaterial({ color: 0xff6b35, transparent: true, opacity: 0.4 });
+ const ring = new THREE.Mesh(new THREE.RingGeometry(22, 28, 24), ringMat);
+ ring.rotation.x = Math.PI / 2;
+ landerGroup.add(ring);
+ // Thruster flame (point light)
+ const fireMat = new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.6 });
+ const fire = new THREE.Mesh(new THREE.ConeGeometry(6, 15, 8), fireMat);
+ fire.position.y = -18;
+ fire.rotation.x = Math.PI;
+ landerGroup.add(fire);
+ scene.add(landerGroup);
+ 
+ // ── Coordinate grid ──
+ const gridHelper = new THREE.GridHelper(4000, 20, 0x888888, 0x444444);
+ gridHelper.position.y = -2;
+ scene.add(gridHelper);
+ 
+ // ── Axes ──
+ const axesHelper = new THREE.AxesHelper(400);
+ axesHelper.position.set(-1500, -2, -1500);
+ scene.add(axesHelper);
+ 
+ // ── Animation loop ──
+ function updateScene(frame) {
+   frame = Math.min(frame, totalFrames - 1);
+   const p = traj.points[frame];
+   landerGroup.position.set(p[0], p[1], p[2]);
+   
+   // Compute look direction (next point)
+ if (frame < totalFrames - 1) {
+     const next = traj.points[frame + 1];
+     const dir = new THREE.Vector3(next[0] - p[0], next[1] - p[1], next[2] - p[2]);
+     if (dir.length() > 0.01) {
+       landerGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir.normalize());
+     }
+   }
+ 
+   // Update stats
+   const alt = Math.max(0, p[1]).toFixed(0);
+   const vel = (600 * (1 - frame / totalFrames) + 50).toFixed(1);
+   const fuel = (100 * (1 - frame / totalFrames)).toFixed(0);
+   document.getElementById('stat-alt').textContent = alt;
+   document.getElementById('stat-vel').textContent = vel;
+   document.getElementById('stat-fuel').textContent = fuel;
+   document.getElementById('time-label').textContent = `t = ${(frame * 0.025).toFixed(1)}s`;
+   document.getElementById('current-frame').textContent = `${Math.round(frame / totalFrames * 100)}%`;
+   document.getElementById('timeline').value = frame;
+ }
+ 
+ function animate() {
+   requestAnimationFrame(animate);
+   controls.update();
+   
+   if (isPlaying) {
+     currentFrame = (currentFrame + 1) % totalFrames;
+     updateScene(currentFrame);
+   }
+   
+   renderer.render(scene, camera);
+ }
+ 
+ // ── UI event handlers ──
+ document.getElementById('play-btn').addEventListener('click', () => {
+   isPlaying = !isPlaying;
+   document.getElementById('play-btn').textContent = isPlaying ? '⏸' : '▶';
+   if (isPlaying && currentFrame >= totalFrames - 1) {
+     currentFrame = 0;
+   }
+ });
+ 
+ document.getElementById('timeline').addEventListener('input', (e) => {
+   currentFrame = parseInt(e.target.value);
+   updateScene(currentFrame);
+   if (isPlaying) { isPlaying = false; document.getElementById('play-btn').textContent = '▶'; }
+ });
+ 
+ // ── Resize ──
+ window.addEventListener('resize', () => {
+   camera.aspect = window.innerWidth / window.innerHeight;
+   camera.updateProjectionMatrix();
+   renderer.setSize(window.innerWidth, window.innerHeight);
+ });
+ 
+ // ── Init ──
+ updateScene(0);
+ animate();
+ 
+ // ── Keyboard shortcuts ──
+ document.addEventListener('keydown', (e) => {
+   if (e.key === ' ' || e.key === 'Space') {
+     e.preventDefault();
+     document.getElementById('play-btn').click();
+   }
+ });
+ 
+ console.log('火星着陆轨迹可视化已加载。拖动视角 / 空格播放');
+ </script>
+ </body>
+ </html>
