@@ -8,50 +8,50 @@
 ## 项目结构
 
 ```
-New project/
-├── .agents/                         # Codex 配置
-├── .codex/                          # Codex 环境
-├── AGENTS.md
-├── README.md                        # 本文件
+mars_powered_descent/
+├── .gitignore                      # 排除: .codex/ .agents/ OCRL PDF/ simulink子仓库
+├── AGENTS.md                       # Codex 工作流指令
+├── README.md                       # 本文件
 │
-├── matlab_mcp/                      # MATLAB MCP 服务器
-│   ├── simulink-agentic-toolkit/    #   Simulink MCP 工具包
-│   ├── work/
-│   │   ├── start_simulink_codex.m   #   启动脚本
-│   │   ├── build_*.m                #   模型构建脚本
-│   │   ├── *.slx                    #   Simulink 模型
-│   │   └── sine_test.m              #   测试脚本
-│   └── slprj/                       #   Simulink 缓存
+├── matlab_mcp/                     # MATLAB MCP 服务器
+│   ├── work/                       #   工作脚本和模型
+│   │   ├── start_simulink_codex.m
+│   │   ├── build_closed_loop_speed_control.m
+│   │   ├── build_satellite_orbit_model.m
+│   │   ├── closed_loop_speed_control.slx
+│   │   ├── satellite_orbit_sim.slx
+│   │   └── sine_test.m
+│   ├── slprj/                      #   Simulink 缓存
+│   └── simulink-agentic-toolkit/   #   ■ 本地存在，git忽略（需单独clone）
 │
-├── mars_guidance/                   # ★ 火星着陆制导项目
+├── mars_guidance/                  # ★ 火星着陆制导项目
 │   ├── mars_paper/
-│   │   └── TECHNICAL_REPORT.md      #   技术解析文档
+│   │   └── TECHNICAL_REPORT.md     #   技术解析文档
 │   ├── mars_tutorial/
-│   │   ├── PAPER_READING_GUIDE.md   #   论文阅读指南
-│   │   └── mars_landing_viz.html    #   3D 交互可视化
+│   │   ├── PAPER_READING_GUIDE.md  #   论文阅读指南
+│   │   └── mars_landing_viz.html   #   3D 交互可视化
 │   └── mars_project/
-│       ├── main.m                   #   主脚本
-│       ├── mars_params.m            #   所有参数
+│       ├── main.m                  #   主脚本
+│       ├── mars_params.m           #   所有参数
 │       ├── dynamics/
-│       │   └── mars_dynamics.m      # [论文] 动力学方程 (Eq.1)
+│       │   └── mars_dynamics.m     # [论文] 动力学方程 (Eq.1)
 │       ├── convex_opt/
-│       │   ├── forward_sim.m        # [论文] 前向仿真
-│       │   ├── solve_fuel_optimal.m # [论文] 凸优化求解器 (Problem 2-4)
-│       │   └── plot_results.m       # [论文] 可视化
+│       │   ├── forward_sim.m       # [论文] 前向仿真
+│       │   ├── solve_fuel_optimal.m # [论文] 凸优化求解器
+│       │   └── plot_results.m      # [论文] 可视化
 │       ├── obstacle/
-│       │   └── relaxed_glide_slope.m # [论文] 避障约束 (Eq.7-8)
-│       ├── nn_accel/
-│       │   ├── train_nn_approximator.m  # [拓展] NN 加速 (DL Toolbox)
-│       │   └── train_nn_simple.m        # [拓展] NN 加速 (基础版)
-│       └── results/                 #   仿真结果图
+│       │   └── relaxed_glide_slope.m # [论文] 避障约束
+│       └── nn_accel/
+│           ├── train_nn_approximator.m  # [拓展] NN 加速
+│           └── train_nn_simple.m        # [拓展] NN 加速
 │
-└── OCRL/                            # OCR 学习资料
-    ├── HW/
-    ├── HW_Solution/
-    └── lecture-notebooks/
+└── OCRL/                           # OCR 学习资料
+    ├── HW/                         #   作业 (HW0-4)
+    ├── HW_Solution/                #   作业解答
+    └── lecture-notebooks/          #   课程讲义 (不含PDF)
 ```
 
-> 注：Desktop 上另有一份 mars_guidance/ 副本（含 mars_paper/paper.pdf），用于日常阅读和调试。
+> simulink-agentic-toolkit 需从 https://github.com/matlab/simulink-agentic-toolkit 单独克隆。
 
 ## 论文 vs 拓展
 
@@ -75,7 +75,8 @@ New project/
 ## 运行步骤
 
 ```matlab
->> cd mars_guidance/mars_project
+>> cd mars_powered_descent/mars_guidance/mars_project
+>> addpath(genpath('C:\My App\Matlab\cvx'))
 >> main
 ```
 
@@ -109,3 +110,5 @@ New project/
     这是后面要解决的核心难题之一。
   - 以目标点为原点建立惯性坐标系。传统下滑角约束：
     以原点为顶点建立倒立锥，着陆器要始终在锥外面飞行。
+
+
