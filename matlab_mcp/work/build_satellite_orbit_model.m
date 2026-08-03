@@ -1,4 +1,5 @@
-projectRoot = 'C:/Users/17978/Documents/New project';
+% 模型保存到本脚本所在目录（matlab_mcp/work/），避免硬编码绝对路径
+projectRoot = fileparts(mfilename('fullpath'));
 model = 'satellite_orbit_sim';
 modelPath = fullfile(projectRoot, [model '.slx']);
 
