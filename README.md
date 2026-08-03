@@ -124,6 +124,15 @@ mars_powered_descent/
 - 同步 README / ROADMAP / 指南 / 技术报告 / main.m 中的 NN 引用
 - **项目现状**：论文复现不受影响（Problem 4 + Algorithm 1/2 全部保留）
 
+### 2026-08-03 · ROADMAP 时间估算重写
+
+- 难度系数改为 1 lecture = 3-5h 消化（中值 4h）；只排与论文相关的 lecture
+- 论文主体 ~141h（区间 124-158h）+ CVX 深挖 14h + MPC 化 8h + 复盘 20h ≈ **183h**
+- **不排 RL**（与论文无关）；6-DoF 暂缓；2025 OCRL 为唯一学习标准，
+  2022 笔记（`OCRL/2022cmu/`，临时）仅作难度校准
+- 日历：12/22 开工 → 软期限 **1/30 小年**（28 工作日）→ 硬期限 2/4
+- **项目现状**：代码不受影响，纯学习规划更新
+
 ### 2026-08-03 · 审查整改轮（已提交 2458520 / 7398d2c，已推送）
 
 - **隐私清理**：AGENTS.md 与 matlab_mcp 工作脚本去掉硬编码绝对路径；OCRL 55 个 notebook 输出清理（nbstripout），`HW0/.vscode/settings.json` 删除
