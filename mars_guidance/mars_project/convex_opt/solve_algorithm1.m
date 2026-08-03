@@ -125,10 +125,11 @@ function out = solve_algorithm1(params, opts)
                 [~, marg(k)] = obstacle_constraint(sol.X(1:3, k), params, ctype, 1);
             end
             all_ok = min(marg) >= -1e-3;
-            % Paper Algorithm 1 step 12: terminate only when j >= H+1
-            % (delta reaches 1 at j=H; one extra refinement pass at j=H+1).
-            % Every round is checked, but early termination before the full
-            % constraint has been solved twice is intentionally not allowed.
+            % Paper Algorithm 1 step 12: convergence is checked every round;
+            % termination additionally requires j >= H+1, i.e. the full
+            % constraint (delta=1, reached at j=H) is solved at least twice
+            % with the updated reference. A solution that meets the criteria
+            % earlier is still refined once more, per the paper's schedule.
             if all_ok && slack_norm <= eps_zeta && j >= H+1
                 break;
             end
@@ -163,6 +164,8 @@ function out = solve_algorithm1(params, opts)
     if verbose
         fprintf('Algorithm 1 done after %d iterations, fuel = %.2f kg\n', ...
                 out.iterations, sol.fuel);
+        fprintf('  tightness max|sigma-||u||| = %.3e, raw thrust m*sigma = [%.2f, %.2f] N\n', ...
+                out.tightness, out.thrust_min, out.thrust_max);
     end
 end
 

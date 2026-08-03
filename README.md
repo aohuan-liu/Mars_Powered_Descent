@@ -54,11 +54,12 @@ mars_powered_descent/
 │       ├── dynamics/
 │       │   └── mars_dynamics.m     # [论文] 动力学方程 (Eq.1)
 │       ├── convex_opt/
-│       │   ├── forward_sim.m       # [论文] 前向仿真
+│       │   ├── forward_sim.m       # [论文] 前向仿真（ZOH 精确离散，可选 RK4）
 │       │   ├── solve_pd_socp.m      # [论文] 核心 SOCP 求解器 (Problem 4/5/6/7)
 │       │   ├── solve_fuel_optimal.m # [论文] Problem 4 (可选 Eq.6)
 │       │   ├── solve_algorithm1.m   # [论文] Algorithm 1 (同伦+松弛)
 │       │   ├── solve_algorithm2.m   # [论文] Algorithm 2 (仰角优化)
+│       │   ├── zoh_matrices.m       # [论文] Ad/Bd/Bd_g 幂零闭式 (Eq.23-24)
 │       │   ├── trajectory_metrics.m # 燃料/裕度/仰角积分指标
 │       │   └── plot_results.m      # [论文] 可视化
 │       ├── obstacle/
@@ -118,6 +119,25 @@ mars_powered_descent/
 ```
 
 论文公式 ↔ 代码文件的对应关系见 [ROADMAP.md](ROADMAP.md) 贯通总表。
+
+## 提交记录
+
+> **2026-08-03 14:38 封存**：项目第一阶段已完成，等待初试后学习，已封存。
+
+### 2026-08-03 · 审查整改轮（未提交，待拆分提交）
+
+- **隐私清理**：AGENTS.md 与 matlab_mcp 工作脚本去掉硬编码绝对路径；OCRL 55 个 notebook 输出清理（nbstripout），`HW0/.vscode/settings.json` 删除
+- **正确性**：新增松弛紧性事后检查（max|σ-‖u‖₂| 与原始推力界 T_min≤m·σ≤T_max）；forward_sim 改为与求解器一致的 ZOH 精确离散（可选 RK4 连续对照）；Algorithm 1/2 收敛注释按论文第 12 步修正；run_milestone3 的 H=5 重试污染修复（副本重试）
+- **数值**：新增 zoh_matrices.m 幂零闭式（Ad/Bd/Bd_g，与 expm/数值积分差 ~1e-15）
+- **文档**：TECHNICAL_REPORT 参考文献年份修正为 2026；指南与技术报告同步紧性证据链
+- **项目现状**：论文三部分全部复现并验证——Problem 4 基准 360.33 kg、加 Eq.6 后 360.71 kg；Algorithm 1 tf=80: 365.29（论文 365.18）、tf=100: 409.47（论文 409.12）；Algorithm 2 α 峰值 1.5 ∈ [0.5,2]；松弛紧性 ~1e-8，原始推力界满足
+
+### 2026-08-02 · 论文全量复现（已提交，含 b163fda / 2e879b1 / d93de76 / 9a7ea8a / 91487ac）
+
+- 项目结构整理（三层架构 + .gitignore）；README 路径与结构修正
+- 统一 Problem 4/5/6/7 求解器，实现 Algorithm 1（同伦+松弛）与 Algorithm 2（仰角优化）
+- 里程碑脚本、结果 .mat/PNG、技术报告与分阶段学习指南
+- **项目现状**：完成论文全链路实现，核心数字对照论文（360.33 / 360.71 / 365.29 / 409.47 / α=1.5）
 
 ## 学习笔记
 

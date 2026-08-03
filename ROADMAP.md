@@ -15,13 +15,16 @@
 - 🔄 学习中（课程 / 论文 / 代码三件套任一进行中）
 - ✅ 已验收（通过指南"验收"标准，能自己讲出来）
 
-## 项目代码基线（2026-08-02，仅供参考，不算学习进度）
+## 项目代码基线（2026-08-03，仅供参考，不算学习进度）
 
 论文全部算法已实现并验证：
 - Problem 4（可选 Eq.6 下滑角）：基准 360.33 kg，加约束 360.71 kg
 - Algorithm 1（同伦+松弛）：365.29 / 409.47 kg（论文 365.18 / 409.12，偏差 <0.1%）
 - Algorithm 2（仰角目标）：α 峰值 1.5，落在论文 [0.5,2] 区间
-- 详细验证记录见 [TECHNICAL_REPORT.md](mars_guidance/mars_paper/TECHNICAL_REPORT.md) §8
+- 2026-08-03 审查整改轮新增：松弛紧性事后检查（max|σ-‖u‖₂|≈1e-8，原始推力界满足）、
+  Ad/Bd/Bd_g 幂零闭式（`zoh_matrices.m`）、forward_sim 精确 ZOH 离散（可选 RK4 对照）
+- 详细验证记录见 [TECHNICAL_REPORT.md](mars_guidance/mars_paper/TECHNICAL_REPORT.md) §8；
+  项目改动时间线见 [README.md](README.md) 提交记录
 
 ## 贯通总表
 

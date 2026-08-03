@@ -65,33 +65,9 @@ function out = solve_pd_socp(params, spec)
     alpha     = getfield_default(spec, 'alpha', 1);
 
     % ------------------------------------------------------------------
-    % ZOH discretization (Eq.21-24)
+    % ZOH discretization (Eq.21-24), exact closed form (A_c^2 = 0)
     % ------------------------------------------------------------------
-    A_c = [zeros(3,3), eye(3), zeros(3,1);
-           zeros(3,3), zeros(3,3), zeros(3,1);
-           zeros(1,6), 0];
-    B_c = [zeros(3,3), zeros(3,1);
-           eye(3),    zeros(3,1);
-           zeros(1,3), -lam];
-    Ad = expm(A_c * dt);
-
-    n_quad = 10;
-    tau_vals = linspace(0, dt, n_quad);
-    wts = dt / n_quad * ones(1, n_quad);
-    Bd = zeros(7, 4);
-    for i = 1:n_quad
-        tau = tau_vals(i);
-        phi = expm(A_c * (dt - tau));
-        Bd = Bd + wts(i) * phi * B_c;
-    end
-
-    g_vec = [0; 0; 0; -g; 0; 0; 0];
-    Bd_g = zeros(7, 1);
-    for i = 1:n_quad
-        tau = tau_vals(i);
-        phi = expm(A_c * (dt - tau));
-        Bd_g = Bd_g + wts(i) * phi * g_vec;
-    end
+    [Ad, Bd, Bd_g] = zoh_matrices(params);
 
     % ------------------------------------------------------------------
     % Reference log-mass bounds (Eq.27): z_l = min-thrust path (highest
@@ -214,6 +190,15 @@ function out = solve_pd_socp(params, spec)
         out.pos_err = norm(X(1:3, end) - rf);
         out.vel_err = norm(X(4:6, end) - vf);
 
+        % Slack-tightness post-check (lossless relaxation evidence):
+        %   tightness = max|sigma - ||u||_2|  (should be ~0 for fuel-optimal)
+        %   raw thrust = m * sigma at control points (paper Eq.5: T_min <= T <= T_max)
+        m_ctrl = exp(X(7, 1:N+1));            % mass at control times t_0..t_N
+        thrust = m_ctrl .* sig;               % m*sigma ~ actual thrust magnitude
+        out.tightness = max(abs(sig - vecnorm(u)));
+        out.thrust_min = min(thrust);
+        out.thrust_max = max(thrust);
+
         % Obstacle margin of the obtained trajectory (full constraint, delta=1)
         if strcmp(ctype, 'none')
             out.min_margin = inf;
@@ -241,6 +226,7 @@ function out = solve_pd_socp(params, spec)
     else
         out.mass = []; out.fuel = nan; out.pos_err = nan; out.vel_err = nan;
         out.min_margin = nan; out.elev_integral = nan; out.obj_value = nan;
+        out.tightness = nan; out.thrust_min = nan; out.thrust_max = nan;
     end
 end
 

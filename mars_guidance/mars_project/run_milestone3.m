@@ -85,8 +85,9 @@ for i = 1:numel(tfB)
     opts.verbose = false;
     out = solve_algorithm2(params, opts);
     if ~strcmp(out.status, 'Solved') || ~out.converged
-        opts.H = 5;   % finer homotopy retry for marginal points
-        out = solve_algorithm2(params, opts);
+        optsR = opts;             % retry on a COPY so opts stays H=3
+        optsR.H = 5;              % finer homotopy retry for marginal points
+        out = solve_algorithm2(params, optsR);
     end
     scanB(i).tf = tfB(i);
     scanB(i).fuel = out.fuel;
@@ -119,8 +120,9 @@ for i = 1:numel(tfC)
     opts.verbose = false;
     out = solve_algorithm2(params, opts);
     if ~strcmp(out.status, 'Solved') || ~out.converged
-        opts.H = 5;   % finer homotopy retry for marginal points
-        out = solve_algorithm2(params, opts);
+        optsR = opts;             % retry on a COPY so opts stays H=3
+        optsR.H = 5;              % finer homotopy retry for marginal points
+        out = solve_algorithm2(params, optsR);
     end
     scanC(i).tf = tfC(i);
     scanC(i).fuel = out.fuel;

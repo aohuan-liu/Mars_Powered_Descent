@@ -40,6 +40,10 @@
  % In the real scenario, initial velocity is [-75,0,70] m/s, so the lander
  % will accelerate downward because mass decreases (thrust becomes > weight)
  % and initial velocity is negative. This is expected behavior.
+ %
+ % forward_sim uses the same exact ZOH discretization as the solver
+ % (paper Eq.23-24), so an optimized trajectory can be replayed exactly;
+ % use forward_sim(T_seq, params, 'rk4') for a continuous RK4 cross-check.
  
  fprintf('\n--- Step 2: Forward Simulation (Constant Thrust) ---\n');
  

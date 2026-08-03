@@ -49,6 +49,9 @@ function [X_opt, U_opt, sigma_opt, exit_flag, info] = solve_fuel_optimal(params,
         fprintf('Fuel used: %.2f kg\n', sol.fuel);
         fprintf('Position error: %.4f m\n', sol.pos_err);
         fprintf('Velocity error: %.4f m/s\n', sol.vel_err);
+        fprintf('Slack tightness max|sigma-||u|||: %.3e\n', sol.tightness);
+        fprintf('Raw thrust m*sigma: [%.2f, %.2f] N (paper: [%.2f, %.2f])\n', ...
+                sol.thrust_min, sol.thrust_max, params.T_min, params.T_max);
         if strcmp(ctype, 'glide')
             fprintf('Glide-slope min margin: %.2f m\n', sol.min_margin);
         end

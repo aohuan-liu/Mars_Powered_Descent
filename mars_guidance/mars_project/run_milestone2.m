@@ -22,8 +22,8 @@ fprintf('\n--- A) Stepwise constraint, Tables 1-2, tf=80 ---\n');
 optsA.constraint = 'stepwise';
 outA = solve_algorithm1(params, optsA);
 mA = trajectory_metrics(outA.X, params, 'stepwise');
-fprintf('Fuel: %.2f kg | min margin: %.2f m | iterations: %d\n', ...
-        mA.fuel, mA.min_margin, outA.iterations);
+fprintf('Fuel: %.2f kg | min margin: %.2f m | iterations: %d | tightness: %.2e\n', ...
+        mA.fuel, mA.min_margin, outA.iterations, outA.tightness);
 
 % ------------------------------------------------------------------
 % Case B: relaxed glide-slope, Fig.20 scenario, tf=80
@@ -34,8 +34,8 @@ optsB.r0 = [1500; 0; 500];
 optsB.v0 = [-75; 0; -100];
 outB = solve_algorithm1(params, optsB);
 mB = trajectory_metrics(outB.X, params, 'relaxed');
-fprintf('Fuel: %.2f kg (paper: 365.18) | min margin: %.2f m | iterations: %d\n', ...
-        mB.fuel, mB.min_margin, outB.iterations);
+fprintf('Fuel: %.2f kg (paper: 365.18) | min margin: %.2f m | iterations: %d | tightness: %.2e\n', ...
+        mB.fuel, mB.min_margin, outB.iterations, outB.tightness);
 
 % ------------------------------------------------------------------
 % Case C: relaxed glide-slope, same ICs, tf=100
@@ -45,8 +45,8 @@ optsC = optsB;
 optsC.tf = 100;
 outC = solve_algorithm1(params, optsC);
 mC = trajectory_metrics(outC.X, params, 'relaxed');
-fprintf('Fuel: %.2f kg (paper: 409.12) | min margin: %.2f m | iterations: %d\n', ...
-        mC.fuel, mC.min_margin, outC.iterations);
+fprintf('Fuel: %.2f kg (paper: 409.12) | min margin: %.2f m | iterations: %d | tightness: %.2e\n', ...
+        mC.fuel, mC.min_margin, outC.iterations, outC.tightness);
 
 % ------------------------------------------------------------------
 % Case D: feasible region, fuel vs terminal time (Fig.22 analog)

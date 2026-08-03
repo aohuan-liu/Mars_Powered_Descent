@@ -127,8 +127,9 @@
  X_{k+1} = Ad * X_k + Bd * [u_k; sigma_k] + Bd_g
  ```
  
- 其中 Ad = expm(Ac * dt) 通过矩阵指数精确计算，
- Bd 和 Bd_g 通过数值积分获得。
+其中 A_c 是幂零矩阵（A_c²=0），因此 Ad = e^(Ac·Δt) = I + Δt·A_c 精确成立，
+Bd = Δt·B_c + Δt²/2·A_c·B_c、Bd_g = Δt·g_vec + Δt²/2·A_c·g_vec，
+由闭式直接计算（代码见 `convex_opt/zoh_matrices.m`，无需数值积分）。
  
  离散点数 N=30，时间步长 dt = 80/31 ≈ 2.58s。
  
@@ -175,7 +176,7 @@
  
  1. **参数准备**: 从 mars_params 提取所有物理/数值参数
  2. **无损凸化**: 计算 z0 = ln(m_wet)，设置对数质量变量
- 3. **离散化**: 计算 Ad, Bd, Bd_g 矩阵
+3. **离散化**: 计算 Ad, Bd, Bd_g 矩阵（幂零闭式，Eq.23-24）
  4. **Taylor参考点**: 计算 z_l, z_u（燃料消耗的上下界）
  5. **CVX求解**:
     - 定义变量 X(7x32), u(3x31), sig(1x31)
@@ -210,7 +211,7 @@
  - **燃料消耗 360.34 kg**: 在初始总质量 1905 kg 的约束下，消耗约 18.9% 的燃料
    （可用燃料 500 kg = 1905 - 1405），余量充足
  - **位置/速度误差为零**: SOCP 求解器严格满足了终端等式约束
- - **前向仿真终端高度-3779m**: 这是由于初始高度 1500m + 初始速度-75m/s，
+ - **前向仿真终端高度约-3752m（ZOH 精确离散）**: 这是由于初始高度 1500m + 初始速度-75m/s，
    常值推力 = 初始重力，随着燃料消耗质量减轻，推力相对增大，导致持续加速下降
  
  ### 6张可视化图表说明
@@ -266,7 +267,7 @@
 
 ---
 
-## 8. 实现进度与验证结果（2026-08-02 更新）
+## 8. 实现进度与验证结果（2026-08-03 更新）
 
 本线程按 ROADMAP 里程碑完成了三阶段实现与 MATLAB/CVX 验证。
 代码入口：
@@ -320,8 +321,10 @@ GPOPS 同样报 505.484 kg，说明这是论文内部不一致（Table 1 与 Tab
 
 365.29/409.47 vs 365.18/409.12：偏差 0.11/0.35 kg（0.03%/0.09%），
 来源于 N=30 离散化与论文求解器的差异，属于可接受复现精度。
-同时复现了燃料-终端时间可行域曲线（Fig.22 类比）：tf=60 时 403.3 kg
-（近全推力边界），tf≈70 处燃料最低 357.26 kg，之后随 tf 单调上升。
+同时复现了燃料-终端时间可行域曲线（Fig.22 类比）：tf=60/65 s 处于
+最小着陆时间边界（数值刀刃，求解器对 ~1e-15 的矩阵舍入敏感，有时报
+不可行/不收敛，已用 converged 标志如实标注）；tf≈70 s 处燃料最低
+357.26 kg，之后随 tf 单调上升（70-110 s 全程稳定收敛）。
 
 ### 8.3 里程碑 3：Algorithm 2（仰角优化）
 
@@ -341,8 +344,8 @@ GPOPS 同样报 505.484 kg，说明这是论文内部不一致（Table 1 与 Tab
 
 | m_fuel | 可行 tf 区间 | 仰角积分曲线 | 峰值 |
 |---|---|---|---|
-| 365.18 kg | [65, 80] s | 1720.7(65) → 1781.3(70) → 1773.0(75) → 1643.0(80) | tf=70 |
-| 409.12 kg | [65, 95] s | 1896.8(65) → 2116.2(80) → 2111.7(85) → 1982.4(95) | tf=80 |
+| 365.18 kg | [70, 80] s | 1781.3(70) → 1773.0(75) → 1643.0(80) | tf=70 |
+| 409.12 kg | [70, 95] s | 1987.4(70) → 2116.2(80) → 2111.7(85) → 1982.4(95) | tf=80 |
 
 两条曲线均为单峰（与论文 Fig.25/29 "elevation angle integral curve exhibits
 a single peak" 一致）。tf=100、m_fuel=409.12 位于可行域边界之外：
@@ -360,12 +363,18 @@ a single peak" 一致）。tf=100、m_fuel=409.12 位于可行域边界之外：
    明确 H=3（"converges within four SCP iterations"），已改为 3。
 4. **单次求解在 tf≥140 不可行**：Taylor 线性化（Eq.26）随 tf 累积误差，
    印证论文采用迭代细化（Eq.30）的必要性。
+5. **松弛紧性事后检查（已加入）**：无损凸化的紧性验证
+   max|σ-‖u‖₂| 与原始推力界 T_min ≤ m·σ ≤ T_max（Eq.5）：
+   - 基准（单次 Problem 4）：紧性 2.75e-08，原始推力界 [4971.43, 13258.17] N，
+     下界比 T_min 低 0.39 N（Taylor 近似残差，0.008%）；
+   - Algorithm 1（迭代细化后）：紧性 9.14e-06，原始推力界 [4971.82, 13258.17] N，
+     精确满足 —— 量化了论文"改进方法消除 Taylor 误差"的论断（Fig.18 主题）。
 
 ---
 
 ## 参考文献
  
- 1. Gao et al., "Obstacle avoidance guidance for Mars powered descent using convex optimization and elevation angle", *Acta Astronautica* 248 (2024) 296-313
+ 1. Gao et al., "Obstacle avoidance guidance for Mars powered descent using convex optimization and elevation angle", *Acta Astronautica* 248 (2026) 296-313
  2. Acikmese & Ploen, "Convex programming approach to powered descent guidance for Mars landing", *AIAA JGCD*, 2007
  3. Blackmore, Acikmese, Scharf, "Minimum-landing-error powered-descent guidance for Mars landing using convex optimization", *AIAA JGCD*, 2010
  4. Scharf et al., "G-FOLD: A real-time implementable fuel-optimal guidance algorithm", *IEEE Aerospace Conference*, 2012

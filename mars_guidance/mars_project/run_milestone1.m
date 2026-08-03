@@ -41,6 +41,9 @@ fprintf('  Baseline fuel             : %.2f kg  (paper: n/a)\n', m0.fuel);
 fprintf('  Baseline Eq.6 violation   : %.2f m\n', m0.min_margin);
 fprintf('  Eq.6-constrained fuel     : %.2f kg  (tf=80; paper 505.49 is Fig.18d/tf~138 s, see report 8.1)\n', m1.fuel);
 fprintf('  Eq.6 min margin           : %.2f m\n', m1.min_margin);
+fprintf('  Eq.6 slack tightness      : %.3e  (max|sigma-||u|||)\n', info1.tightness);
+fprintf('  Eq.6 raw thrust m*sigma   : [%.2f, %.2f] N  (paper: [%.2f, %.2f])\n', ...
+        info1.thrust_min, info1.thrust_max, params.T_min, params.T_max);
 fprintf('------------------------------------------------------------\n');
 
 if ~exist('results', 'dir'), mkdir('results'); end
