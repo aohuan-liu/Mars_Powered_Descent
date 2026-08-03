@@ -165,10 +165,6 @@ Bd = Δt·B_c + Δt²/2·A_c·B_c、Bd_g = Δt·g_vec + Δt²/2·A_c·g_vec，
  |-- obstacle/
  |   |-- obstacle_constraint.m # 避障约束 (Eq.6-8, 含同伦参数)
  |
- |-- nn_accel/
- |   |-- train_nn_approximator.m  # NN加速 (Deep Learning Toolbox版)
- |   |-- train_nn_simple.m        # NN加速 (Neural Network Toolbox版)
- |
  |-- mars_landing_viz.html     # 3D交互可视化 (Three.js)
  ```
  
@@ -254,16 +250,10 @@ Bd = Δt·B_c + Δt²/2·A_c·B_c、Bd_g = Δt·g_vec + Δt²/2·A_c·g_vec，
  - Algorithm 2: 仰角优化的凸优化算法
  - 分析仰角权重 alpha 对轨迹的影响
  
- ### Phase 4: NN 加速
- - 生成训练数据（不同初始条件 × MPC 求解）
- - 训练前馈神经网络替代优化求解器
- - 对比 MPC 最优轨迹 vs NN 轨迹
- - 对比求解时间（秒级 vs 毫秒级）
- 
-### Phase 5: 强化学习扩展
+### Phase 4: 强化学习扩展
 - 配置 RL 环境（MATLAB RL Toolbox）
 - 训练 PPO/SAC agent
-- 三方法对比：凸优化 / NN拟合 / RL
+- 两方法对比：凸优化 / RL
 
 ---
 

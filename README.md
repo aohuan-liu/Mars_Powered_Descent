@@ -20,8 +20,7 @@
   目标 + 固定燃料约束，α 扫描仰角积分峰值在 α=1.5，落在论文 [0.5,2] 区间。
 - **验证与证据**：验证脚本逐场景对照论文数字，结果数据与图保存在
   `results/`；详细记录见 `mars_paper/TECHNICAL_REPORT.md` §8。
-- **自主拓展**：NN 加速（`nn_accel/`）方法论待修正（开环轨迹 ≠ 反馈策略），
-  暂不可用；RL 对比（PPO/SAC）待实现。
+- **自主拓展**：RL 对比（PPO/SAC）待实现（论文主体不涉及）。
 
 ## 项目结构
 
@@ -68,11 +67,7 @@ mars_powered_descent/
 │       ├── run_milestone2.m        # 里程碑2: Algorithm 1
 │       ├── run_milestone3.m        # 里程碑3: Algorithm 2
 │       ├── export_figures.m        # 由 .mat 结果导出 PNG
-│       ├── results/                # 结果 .mat 与 PNG
-│       └── nn_accel/
-│           ├── README.md                # [拓展] 方法论待修正，勿用
-│           ├── train_nn_approximator.m  # [拓展] NN 加速 (DL Toolbox)
-│           └── train_nn_simple.m        # [拓展] NN 加速 (简易版)
+│       └── results/                # 结果 .mat 与 PNG
 │
 └── OCRL/                           # OCR 学习资料
     ├── HW/                         #   作业 (HW0-4)
@@ -99,7 +94,6 @@ mars_powered_descent/
 | 常规下滑角约束 Eq.6 | 论文 Section 2.3 | 已实现（tf=80: 360.71 kg，见技术报告 8.1） |
 | 同伦迭代避障 (Section 3.3-3.4, Algorithm 1) | 论文 | 已实现（365.29/409.47 vs 365.18/409.12） |
 | 仰角最大化 (Section 4, Algorithm 2) | 论文创新点 | 已实现（α 峰值 1.5 ∈ [0.5,2]） |
-| NN 加速 (nn_accel/) | **自主拓展** | 方法论需修正（开环轨迹≠反馈策略），暂不可用 |
 | RL 对比 (PPO/SAC) | **自主拓展** | 待实现 |
 
 ## 前置条件
@@ -107,8 +101,7 @@ mars_powered_descent/
 1. MATLAB (R2020b+)
 2. CVX 工具箱: https://cvxr.com/cvx/download/
    - 下载后解压，在 MATLAB 中运行 cvx_setup
-3. (可选) Deep Learning Toolbox — NN 拓展需要
-4. (可选) Reinforcement Learning Toolbox — RL 拓展需要
+3. (可选) Reinforcement Learning Toolbox — RL 拓展需要
 
 ## 运行步骤
 
@@ -123,6 +116,13 @@ mars_powered_descent/
 ## 提交记录
 
 > **2026-08-03 14:38 封存**：项目第一阶段已完成，等待初试后学习，已封存。
+
+### 2026-08-03 14:56 · 封存后整理：移除 NN 拓展
+
+- 删除 `nn_accel/`（train_nn_approximator.m、train_nn_simple.m、README.md）——
+  开环轨迹训练不构成反馈策略，方法论不成立，不再保留
+- 同步 README / ROADMAP / 指南 / 技术报告 / main.m 中的 NN 引用
+- **项目现状**：论文复现不受影响（Problem 4 + Algorithm 1/2 全部保留）
 
 ### 2026-08-03 · 审查整改轮（已提交 2458520 / 7398d2c，已推送）
 

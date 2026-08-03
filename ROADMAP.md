@@ -38,7 +38,7 @@
 | 阶段六 Algorithm 2 | §4，Eq.37-42 | Lecture 10-12（目标函数/权重设计） | Lecture 12 笔记本 | `solve_algorithm2.m`、`trajectory_metrics.m` | ⬜ |
 | 阶段七 对照论文实验 | §5，Tables 1-5 | 无新课程（L10 仿真验证思路） | — | `run_milestone1/2/3.m`、`results/` | ⬜ |
 | 后续 MPC 化 | — | Lecture 10 | mpc.ipynb | 待写 | ⬜ |
-| 后续 NN / RL | — | Lecture 19-24（ILC、RL、"How to land"） | — | 待写（方法论先修） | ⬜ |
+| 后续 RL 对比 | — | Lecture 19-24（ILC、RL、"How to land"） | — | 待写 | ⬜ |
 | 可选 6-DoF 闭环 | — | Lecture 15-17（四元数、姿态） | — | 待写 | ⬜ |
 
 ## 当前学习进度（2026-08-02）
