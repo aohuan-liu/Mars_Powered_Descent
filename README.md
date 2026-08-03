@@ -124,7 +124,7 @@ mars_powered_descent/
 
 > **2026-08-03 14:38 封存**：项目第一阶段已完成，等待初试后学习，已封存。
 
-### 2026-08-03 · 审查整改轮（未提交，待拆分提交）
+### 2026-08-03 · 审查整改轮（已提交 2458520 / 7398d2c，已推送）
 
 - **隐私清理**：AGENTS.md 与 matlab_mcp 工作脚本去掉硬编码绝对路径；OCRL 55 个 notebook 输出清理（nbstripout），`HW0/.vscode/settings.json` 删除
 - **正确性**：新增松弛紧性事后检查（max|σ-‖u‖₂| 与原始推力界 T_min≤m·σ≤T_max）；forward_sim 改为与求解器一致的 ZOH 精确离散（可选 RK4 连续对照）；Algorithm 1/2 收敛注释按论文第 12 步修正；run_milestone3 的 H=5 重试污染修复（副本重试）
